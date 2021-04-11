@@ -18,17 +18,29 @@ easilly understood and operate. Thus:
 * bookdesc will NOT generate fulltext index.
 * In fact, bookdesc will not have any indexing support whatsoever.
 * Instead, it will simply generate CSV file which will contain books metadata
-  (book name, ISBN, authors AND SHA1/MD5 book checksums)
-* There will be no extra dependencies required whatsoever
+  (book name, ISBN, authors AND SHA1/MD5 book checksums).
+* There will be no extra dependencies required whatsoever.
 
 h1. Goals
-* Ability to parse fb2 files directly or inside .zip archives
-* Incremental collection (should not scan already scanned files)
+* Ability to parse fb2 files directly or inside .zip archives.
+* Incremental collection (should not scan already scanned files).
 * Ability to split CSV files into sizeable chunks (perhaps, by author first 
-  letter)
+  letter).
+* It should be possible to use the bookdesc module as a library in other
+  python projects.
+* Simple to support code, minimal number of dependencies
 
 h1. Non-goals
-* fulltext seach
-* in fact, ANY search at all
-
+* No fulltext seach.
+* In fact, no search at all.
+* No import from existing databases and/or CSVs.
 """
+
+class BookDesc:
+    "Frontend class for the entire library, also has main() method"
+    
+    def __init__(self): pass
+
+    def generate(self, inputs, output):
+        "Parse inputs(generator of strings), generate CSVs to output"
+        pass

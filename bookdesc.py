@@ -41,6 +41,36 @@ class BookDesc:
     
     def __init__(self): pass
 
-    def generate(self, inputs, output):
-        "Parse inputs(generator of strings), generate CSVs to output"
-        pass
+    def parse_inputs(self, inputs, outpath):
+        "Parse inputs(sequence of strings), generate CSVs to output folder"
+        with self.new_output_cache(outpath) as cache:
+            for input in inputs:
+                with self.open_input(input) as sources:
+                    for file_source in sources:
+                        self.parse_input(cache, file_source)
+
+    def new_output_cache(self, outpath):
+        "Create new instance of the output cache"
+
+    def open_input(self, input_path):
+        """Take input path and return a sequence of FileSources in that path.
+           Single file, folder with subfolders, .zip files are supported"""
+
+    def parse_input(self, output_cache, file_source):
+        "Parse single FileSource and put it to output_cache"
+
+class FileSources:
+    "A sequence of FileSource's that MUST be closed once it is no longer used"
+
+    def __enter__(self): pass
+
+    def __exit__(self, type, value, traceback): pass
+
+class FileSource:
+    "Represents single file which contains a Book"
+
+    def path(self):
+        "Returns a path at which this file is located (might be inside .zip)"
+
+    def open(self):
+        "Open file and return raw bytes"

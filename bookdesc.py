@@ -73,4 +73,4 @@ class FileSource:
         "Returns a path at which this file is located (might be inside .zip)"
 
     def open(self):
-        "Open file and return raw bytes"
+        "Open file and return a readable object (that must be closed after use)"

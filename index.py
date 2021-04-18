@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """On-disk index for books.
 Implemented as simple on-disk key-value DB that provides simple functions like:

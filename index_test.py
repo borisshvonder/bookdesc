@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-import tempfile
 import book_model
 import index
 import unittest
@@ -29,7 +28,8 @@ class IndexTest(unittest.TestCase):
     def setUp(self):
         self.book1 = book_model.Book()
         self.book1.title = "A book"
-        self.book1.sha1 = b'01'
+        self.book1.file = book_model.File()
+        self.book1.file.sha1 = b'01'
         self.db = InMemoryDb()
         self.fixture = index.Index("file", db_impl=lambda f,c: self.db)
         self.fixture.__enter__()
@@ -58,13 +58,14 @@ class IndexTest(unittest.TestCase):
         book1 = self.book1
         book2 = book_model.Book()
         book2.title = book1.title
-        book2.sha1 = b'020202'
+        book2.file = book_model.File()
+        book2.file.sha1 = b'020202'
         self.fixture.put(book1)
         self.fixture.put(book2)
         books = self.fixture.get(book1.title)
-        shas = [book.sha1 for book in books]
-        self.assertTrue(book1.sha1 in shas)
-        self.assertTrue(book2.sha1 in shas)
+        shas = [book.file.sha1 for book in books]
+        self.assertTrue(book1.file.sha1 in shas)
+        self.assertTrue(book2.file.sha1 in shas)
 
 
 if __name__ == '__main__':

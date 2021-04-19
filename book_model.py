@@ -15,4 +15,4 @@ class File:
         self.path = None
         self.sha1 = None
         self.size = None
-        self.mod_time = 0.0 # Unix seconds
+        self.mod_time = 0 # Unix seconds

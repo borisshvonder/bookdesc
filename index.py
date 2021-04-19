@@ -28,7 +28,7 @@ class Index:
     def put(self, book):
         "Put book into the index"
         title = book.title
-        sha1 = book.sha1
+        sha1 = book.file.sha1
         key = self._hash_title(title.encode())
         by_title = self._db[key]
 

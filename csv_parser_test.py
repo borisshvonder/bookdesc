@@ -5,7 +5,7 @@ import book_model
 import csv_parser
 import unittest
 
-class CodecTest(unittest.TestCase):
+class ParserTest(unittest.TestCase):
     def setUp(self):
         book1 = book_model.Book()
         book1.title ="A title"
@@ -22,19 +22,27 @@ class CodecTest(unittest.TestCase):
         self.book1_expected_csv = "A title,Author1;Author2,1993,2nd,"+\
             "978-3-16-148410-0,3031303230333034,/some.fb2,1024,"+\
             "2021-04-18T19:46:57-04:00"
+        self.parser = csv_parser.Parser()
 
     def test_to_csv_line(self):
         self.assertEqual(self.book1_expected_csv,
-            csv_parser.to_csv_line(self.book1))
+            self.to_csv_line(self.book1))
 
     def test_to_csv_line_will_work_on_empty_book(self):
         book2 = book_model.Book()
-        self.assertEqual(",,,,,,,,", csv_parser.to_csv_line(book2))
+        self.assertEqual(",,,,,,,,", self.to_csv_line(book2))
 
     def test_Parser_can_parse_book1(self):
-        parser = csv_parser.Parser()
-        book = parser.parse_values(self.book1_expected_csv)
+        book = self.parser.parse_values(self.book1_expected_csv.split(','))
         self.assertBooksEqual(self.book1, book)
+
+    def test_Parser_can_parse_empty_book(self):
+        book = book_model.Book()
+        csv = self.to_csv_line(book)
+        self.parser.parse_values(csv.split(","))
+
+    def to_csv_line(self, book):
+        return ",".join(csv_parser.to_values(book))
 
     def assertBooksEqual(self, expected, actual):
         self.assertEqual(expected.title, actual.title)

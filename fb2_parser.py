@@ -12,15 +12,24 @@ _EXTRACT_ENCODING2=re.compile("encoding='(.*?)'")
 
 def parse_fb2(binary_stream, buffer=None):
     "Parse contents from fb2 binary stream"
+    book = None
     if not buffer: buffer = bytearray(_MEGABYTE)
     assert len(buffer) >= _MEGABYTE, "parse_fb2 requires at least 1Mb buffer"
     checksummer = _ChecksumStream(binary_stream, buffer, "sha1")
     head = checksummer.read()
     encoding = _determine_encoding(head)
     description_bytes = _find_description(head, encoding)
-    book = _parse_description(description_bytes.decode(encoding))
+    if description_bytes:
+        book = _parse_description(description_bytes.decode(encoding))
     while not checksummer.at_eof():
-        checksummer.read()
+        if not book:
+            # Continue attempting to find description, however, this much less
+            # likely to succeed
+            # TODO: LOG!
+            description_bytes = _find_description(head, encoding)
+            if description_bytes:
+                book = _parse_description(description_bytes.decode(encoding))
+        head = checksummer.read()
     book.file.sha1 = checksummer.digest("sha1")
     return book
 

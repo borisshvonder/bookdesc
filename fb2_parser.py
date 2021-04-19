@@ -39,7 +39,10 @@ def _find_description(view, encodind):
     assert start >= 0, "Can't find <description tag"
     end_tag = "</description>".encode(encoding)
     end = view.find(end_tag, start+1)
-    return buffer[start: end+len(end_tag)
+    if end <0:
+        # TODO: LOG!
+        end = len(view)
+    return view[start: end+len(end_tag)
 
 def _determine_encoding(view):
     if view.startswith(codecs.BOM_UTF8):

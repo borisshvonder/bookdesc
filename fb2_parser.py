@@ -5,10 +5,12 @@ import book_model
 import sha_lib
 import codecs
 import re
+import logging
 
 _MEGABYTE = 1024*1024
 _EXTRACT_ENCODING1=re.compile('encoding="(.*?)"')
 _EXTRACT_ENCODING2=re.compile("encoding='(.*?)'")
+_LOGGER = logger.getLogger("bookdesc.fb2_parser")
 
 def parse_fb2(binary_stream, buffer=None):
     "Parse contents from fb2 binary stream"
@@ -21,13 +23,14 @@ def parse_fb2(binary_stream, buffer=None):
     description_bytes = _find_description(head, encoding)
     if description_bytes:
         book = _parse_description(description_bytes.decode(encoding))
+    else:
+        _LOGGER.info("""Haven't found <description in the first chunk. Will 
+continue looking for the <description tag, but unlikely will find it""")
     while not checksummer.at_eof():
         if not book:
-            # Continue attempting to find description, however, this much less
-            # likely to succeed
-            # TODO: LOG!
             description_bytes = _find_description(head, encoding)
             if description_bytes:
+                _LOGGER.info("Finally, found <description")
                 book = _parse_description(description_bytes.decode(encoding))
         head = checksummer.read()
     book.file.sha1 = checksummer.digest("sha1")
@@ -36,13 +39,16 @@ def parse_fb2(binary_stream, buffer=None):
 def _find_description(view, encodind):
     start_tag = "<description".encode(encoding)
     start = view.find(start_tag)
-    assert start >= 0, "Can't find <description tag"
+    if start < 0: return None
     end_tag = "</description>".encode(encoding)
     end = view.find(end_tag, start+1)
     if end <0:
-        # TODO: LOG!
+        log.warn("""Could not find </description> tag, assuming entire buffer is 
+the description""")
         end = len(view)
-    return view[start: end+len(end_tag)
+    else:
+        end += len(end-tag)
+    return view[start:end]
 
 def _determine_encoding(view):
     if view.startswith(codecs.BOM_UTF8):
@@ -66,33 +72,29 @@ def _determine_encoding(view):
         if ret.lower()=='windows-1251': return "cp1251"
         else: return ret
     else:
-        # assume UTF-8
-        # todo: LOG!
+        _LOGGER.info("Could not determine the encoding, assuming UTF-8")
         return "UTF-8"
-
-
-
 
 
 class _ChecksumStream:
     def __init__(self, stream, buffer, *digests):
         self._buffer = buffer
-        self._memoryview = memoryview(buffer)
+        self._view = memoryview(buffer)
         self._stream = stream
         self._digests = [hashlib.new(digest) for digest in digests]
         self._eof = False
 
     def read():
-        "Read as much as possible into buffer and return memory view of what
-         has been read"
+        """Read as much as possible into buffer and return memory view of what
+           has been read"""
         read = self._stream.readinto(self._buffer)
         if read > 0: 
             for digest in self._digests:
-                digest.update(self.memoryview[:read])
+                digest.update(self.view[:read])
         elif read < 0:
             self._eof = True
             read = 0
-        return self._memoryview[:read]
+        return self._view[:read]
 
     def at_eof(self): return self._eof
 

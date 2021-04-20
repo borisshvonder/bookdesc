@@ -4,11 +4,11 @@
 class Book:
     def __init__(self):
         self.file = None
-        self.title = None
+        self.name = None
         self.authors = []
         self.year = None
-        self.edition = None
         self.isbn = None
+        self.metatext = None
 
 class File:
     def __init__(self):

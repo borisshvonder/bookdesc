@@ -27,7 +27,7 @@ class InMemoryDb:
 class IndexTest(unittest.TestCase):
     def setUp(self):
         self.book1 = book_model.Book()
-        self.book1.title = "A book"
+        self.book1.name = "A book"
         self.book1.file = book_model.File()
         self.book1.file.sha1 = b'01'
         self.db = InMemoryDb()
@@ -41,10 +41,10 @@ class IndexTest(unittest.TestCase):
     def test_put_one_book(self):
         book = self.book1
         self.fixture.put(book)
-        title = book.title
-        got = list(self.fixture.get(title))
+        name = book.name
+        got = list(self.fixture.get(name))
         self.assertEqual(1, len(got))
-        self.assertEqual(title, got[0].title)
+        self.assertEqual(name, got[0].name)
 
     def test_dedup_by_sha(self):
         book = self.book1
@@ -52,17 +52,17 @@ class IndexTest(unittest.TestCase):
         self.fixture.put(book)
         all = list(self.fixture.list())
         self.assertEqual(1, len(all))
-        self.assertEqual(book.title, all[0].title)
+        self.assertEqual(book.name, all[0].name)
 
-    def test_two_books_with_same_title(self):
+    def test_two_books_with_same_name(self):
         book1 = self.book1
         book2 = book_model.Book()
-        book2.title = book1.title
+        book2.name = book1.name
         book2.file = book_model.File()
         book2.file.sha1 = b'020202'
         self.fixture.put(book1)
         self.fixture.put(book2)
-        books = self.fixture.get(book1.title)
+        books = self.fixture.get(book1.name)
         shas = [book.file.sha1 for book in books]
         self.assertTrue(book1.file.sha1 in shas)
         self.assertTrue(book2.file.sha1 in shas)

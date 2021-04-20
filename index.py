@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 """On-disk index for books.
 Implemented as simple on-disk key-value DB that provides simple functions like:
-1) Look up books by title
+1) Look up books by name
 2) Add new book
 3) List all books in the index
 """
@@ -15,39 +15,39 @@ class Index:
         self._filepath = filepath
         self._db_impl = db_impl
 
-    def get(self, title):
-        "Get list of matching books by title"
-        key = self._hash_title(title.encode())
-        by_title = self._db[key]
-        if by_title:
-            by_sha1 = by_title[title]
+    def get(self, name):
+        "Get list of matching books by name"
+        key = self._hash_name(name.encode())
+        by_name = self._db[key]
+        if by_name:
+            by_sha1 = by_name[name]
             if by_sha1: 
                 return by_sha1.values()
         return []
 
     def put(self, book):
         "Put book into the index"
-        title = book.title
+        name = book.name
         sha1 = book.file.sha1
-        key = self._hash_title(title.encode())
-        by_title = self._db[key]
+        key = self._hash_name(name.encode())
+        by_name = self._db[key]
 
-        if by_title is None: 
-            by_title = {}
+        if by_name is None: 
+            by_name = {}
 
-        by_sha1 = by_title.get(title)
+        by_sha1 = by_name.get(name)
         if by_sha1 is None: 
             by_sha1 = {}
-            by_title[title] = by_sha1
+            by_name[name] = by_sha1
 
         by_sha1[sha1] = book
         
-        self._db[key] = by_title
+        self._db[key] = by_name
 
     def list(self):
         "Return a generator which will iterate over all books in the index"
-        for by_title in self._db.values():
-            for by_sha1 in by_title.values():
+        for by_name in self._db.values():
+            for by_sha1 in by_name.values():
                 for book in by_sha1.values():
                     yield book
 
@@ -57,12 +57,12 @@ class Index:
     def __exit__(self, type, value, traceback):
         self._db.close()
 
-    def _hash_title(self, title):
-        "Hash the book title into more compact form"
+    def _hash_name(self, name):
+        "Hash the book name into more compact form"
         # of course, murmurhash will be more effective, but it is another
         # dependency so I have dismissed it
         h = hashlib.new('md5')
-        h.update(title)
+        h.update(name)
         return h.digest()
 
 

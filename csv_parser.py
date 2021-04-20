@@ -5,8 +5,8 @@ only with values (lists). That is because the complexity of quoting and
 unquoting CSVs should be solved at one layer above - perhaps using standard
 "csv" python module """
 
-CSV_HEADER = ("Title", "Authors", "Year", "Edition", "ISBN", "Sha1", "Path", 
-             "Size", "ModTime")
+CSV_HEADER = ("Name", "Authors", "Year", "ISBN", "Sha1", "Path", 
+             "Size", "ModTime", "MetaText")
 
 import datetime
 import book_model
@@ -19,14 +19,13 @@ def to_values(book):
     authors = book.authors if book.authors else []
     authors = ";".join(book.authors)
     sha1 = file.sha1 if file.sha1 else b''
-    title = book.title if book.title else ""
-    edition = book.edition if book.edition else ""
+    name = book.name if book.name else ""
     isbn = book.isbn if book.isbn else ""
     path = file.path if file.path else ""
     year = str(book.year) if book.year else ""
     size = str(file.size) if file.size else ""
-    return (title, authors, year, edition, isbn, sha1.hex(), path, size, 
-        iso8601)
+    meta = book.metatext if book.metatext else ""
+    return (name, authors, year, isbn, sha1.hex(), path, size, iso8601, meta)
 
 def _iso_8601(timestamp):
     if timestamp:
@@ -46,15 +45,15 @@ class Parser:
         for val in header_values:
             v = val.strip().lower()
             func = None
-            if v == "title": func = _parse_title
+            if v == "name": func = _parse_name
             elif v == "authors": func = _parse_authors
             elif v == "year": func = _parse_year
-            elif v == "edition": func = _parse_edition
             elif v == "isbn": func = _parse_isbn
             elif v == "sha1": func = _parse_sha1
             elif v == "path": func = _parse_path
             elif v == "size": func = _parse_size
             elif v == "modtime": func = _parse_modtime
+            elif v == "metatext": func = _parse_metatext
             self._cols.append(func)
 
     def parse_values(self, values):
@@ -77,13 +76,13 @@ def _parse_modtime(book, v):
         dt = datetime.datetime.fromisoformat(v)
         book.file.mod_time = int(dt.timestamp())
 
-def _parse_title(book, v): book.title = v
+def _parse_name(book, v): book.name = v
 def _parse_year(book, v): book.year = _safe_int(v)
-def _parse_edition(book, v): book.edition = v
 def _parse_isbn(book, v): book.isbn = v
 def _parse_sha1(book, v): book.file.sha1 = binascii.a2b_hex(v)
 def _parse_path(book, v): book.file.path = v
 def _parse_size(book, v): book.file.size = _safe_int(v)
+def _parse_metatext(book, v): book.metatext = v
 
 def _safe_int(v):
     return int(v) if v else None

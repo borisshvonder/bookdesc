@@ -27,7 +27,7 @@ def parse(binary_stream, buffer=None):
     encoding = _determine_encoding(buffer, size)
     description_bytes = _find_description(buffer, size, encoding)
     if description_bytes:
-        xml = description_bytes.decode(encoding, errors="ignore")
+        xml = codecs.decode(description_bytes, encoding, errors="ignore")
         book = _parse_description(xml)
     else:
         _LOGGER.info("""Haven't found <description in the first chunk. Will 
@@ -37,7 +37,7 @@ continue looking for the <description tag, but unlikely will find it""")
             description_bytes = _find_description(buffer, size, encoding)
             if description_bytes:
                 _LOGGER.info("Finally, found <description")
-                xml = description_bytes.decode(encoding, errors="ignore")
+                xml = codecs.decode(description_bytes, encoding, errors="ignore")
                 book = _parse_description(xml)
         size = checksummer.read()
     if book:
@@ -57,7 +57,7 @@ the description""")
         end = len(view)
     else:
         end += len(end_tag)
-    return buffer[start:end]
+    return memoryview(buffer)[start:end]
 
 _EXTRACT_ENCODING1=re.compile('encoding="(.*?)"')
 _EXTRACT_ENCODING2=re.compile("encoding='(.*?)'")
@@ -79,7 +79,9 @@ def _determine_encoding(buffer, size):
     if not ret:
         first_newline = buffer.find(b'\n', 0, size)
         if first_newline > 0:
-            first_line = buffer[:first_newline].decode("utf-8", errors="ignore")
+            view = memoryview(buffer)
+            first_line = codecs.decode(view[:first_newline], "utf-8", 
+                errors="ignore")
             encoding = _EXTRACT_ENCODING1.search(first_line)
             if not encoding:
                 encoding = _EXTRACT_ENCODING2.search(first_line)

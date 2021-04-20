@@ -14,6 +14,17 @@ class Index:
         "Open/create a new index backed by file at filepath"
         self._filepath = filepath
         self._db_impl = db_impl
+        
+    def open(self):
+        "Open the index. MUST be called prior to use, but only once"
+        self._db = self._db_impl(self._filepath, 'c')
+
+    def close(self):
+        "Close the index. MUST be called after use, but only once"
+        self._db.close()
+
+    def __enter__(self): self.open()
+    def __exit__(self, type, value, traceback): self.close()
 
     def get(self, name):
         "Get list of matching books by name"
@@ -51,13 +62,7 @@ class Index:
                 for book in by_sha1.values():
                     yield book
 
-    def __enter__(self):
-        self._db = self._db_impl(self._filepath, 'c')
-
-    def __exit__(self, type, value, traceback):
-        self._db.close()
-
-    def _hash_name(self, name):
+   def _hash_name(self, name):
         "Hash the book name into more compact form"
         # of course, murmurhash will be more effective, but it is another
         # dependency so I have dismissed it

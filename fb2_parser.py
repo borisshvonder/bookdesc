@@ -14,7 +14,8 @@ _LOGGER = logging.getLogger("bookdesc.fb2_parser")
 _MEGABYTE = 1024*1024
 
 def parse(binary_stream, buffer=None):
-    "Parse contents from fb2 binary stream"
+    """Parse contents from fb2 binary stream. Returns None if stream does not 
+    contain any books (for ex, is empty)"""
     book = None
     if not buffer: buffer = bytearray(_MEGABYTE)
     if len(buffer) < _MEGABYTE: 
@@ -22,6 +23,7 @@ def parse(binary_stream, buffer=None):
             str(len(buffer))+" bytes")
     checksummer = _ChecksumStream(binary_stream, buffer, "sha1")
     size = checksummer.read()
+    if not size: return None
     encoding = _determine_encoding(buffer, size)
     description_bytes = _find_description(buffer, size, encoding)
     if description_bytes:
@@ -30,7 +32,7 @@ def parse(binary_stream, buffer=None):
     else:
         _LOGGER.info("""Haven't found <description in the first chunk. Will 
 continue looking for the <description tag, but unlikely will find it""")
-    while not checksummer.at_eof():
+    while size:
         if not book:
             description_bytes = _find_description(buffer, size, encoding)
             if description_bytes:
@@ -38,7 +40,9 @@ continue looking for the <description tag, but unlikely will find it""")
                 xml = description_bytes.decode(encoding, errors="ignore")
                 book = _parse_description(xml)
         size = checksummer.read()
-    book.file.sha1 = checksummer.digest("sha1")
+    if book:
+        book.file = book_model.File()
+        book.file.sha1 = checksummer.digest("sha1")
     return book
 
 def _find_description(buffer, size, encoding):
@@ -116,7 +120,8 @@ def _parse_description(xml):
         book.name = _first_text(title_info, "book-title")
     if not book.year:
         book.year = _first_int(title_info, "date")
-    book.annotation = _first_text(title_info, "annotation")
+    annotation = None if title_info is None else title_info.find("annotation")
+    book.annotation = _dump_text(annotation)
     if not book.authors:
         document_info = desc.find("document-info")
         book.authors = _parse_authors(document_info)
@@ -124,13 +129,22 @@ def _parse_description(xml):
 
     return book
 
-#conservative list of a-zA-Z0-9 cause usually XMLs use english tags
-_CONSERVATIVE_ALPHA="[a-zA-Z0-9]"
-_REMOVE_STARTTAG_NAMESPACES=re.compile("[<]"+_CONSERVATIVE_ALPHA+"+[:](.*?)[>]")
-_REMOVE_ENDTAG_NAMESPACES=re.compile("[<]/"+_CONSERVATIVE_ALPHA+"+[:](.*?)[>]")
+_LOOKS_LIKE_TAG=re.compile("<[^>]*?>", re.MULTILINE)
+_COLON=re.compile("[:]")
 
 def _remove_namespaces(xml):
-    return xml
+    result = ""
+    pos = 0
+    m = _LOOKS_LIKE_TAG.search(xml, pos)
+    while m:
+        result += xml[pos:m.start()]
+        no_colons = m.group().replace(":", "_")
+        result += no_colons
+        pos = m.end()
+        m = _LOOKS_LIKE_TAG.search(xml, pos)
+
+    result += xml[pos:]
+    return result
 
 def _parse_authors(parent):
     author_nodes = [] if parent is None else parent.findall("author")
@@ -195,22 +209,19 @@ class _ChecksumStream:
         self._buffer = buffer
         self._view = memoryview(buffer)
         self._stream = stream
-        self._digests = [hashlib.new(digest) for digest in digests]
-        self._eof = False
+        self._digests = {}
+        for digest in digests:
+            self._digests[digest] = hashlib.new(digest)
 
     def read(self):
         """Read as much as possible into buffer and return number of bytes
-           read. Does not return -1 on EOF, returns True via at_eof() 
-           instead"""
+           read. Returns 0 or None when EOF"""
         read = self._stream.readinto(self._buffer)
         if read > 0: 
             result = self._view[:read]
-            for digest in self._digests:
+            for digest in self._digests.values():
                 digest.update(result)
-            return read
-        elif read < 0:
-            self._eof = True
-        return 0
+        return read
 
     def at_eof(self): return self._eof
 

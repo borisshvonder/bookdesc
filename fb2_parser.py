@@ -135,18 +135,44 @@ _LOOKS_LIKE_TAG=re.compile("<[^>]*?>", re.MULTILINE)
 _COLON=re.compile("[:]")
 
 def _remove_namespaces(xml):
-    result = ""
+    """Since we are parsing just the <description> part of the FB2, the 
+    namespaces will not be resolved. Therefore, we have to either:
+    1) use lxml which can withstand undeclared namespaces,
+    2) or use regexp'es/custom code parsing,
+    3) or remove namespaces prior to parsing
+
+    For practical reasons 3rd option was selected since it does not bring
+    additional dependencies (lxml) and is easier to support.
+
+    Even if this approach isn't technically 100% correct, it is practical
+    for realworld FB2 files"""
+    result = io.StringIO()
     pos = 0
     m = _LOOKS_LIKE_TAG.search(xml, pos)
     while m:
-        result += xml[pos:m.start()]
-        no_colons = m.group().replace(":", "_")
-        result += no_colons
+        result.write(xml[pos:m.start()])
+        no_colons = _replace_namespaces_in_tag(m.group())
+        result.write(no_colons)
         pos = m.end()
         m = _LOOKS_LIKE_TAG.search(xml, pos)
 
-    result += xml[pos:]
-    return result
+    result.write(xml[pos:])
+    return result.getvalue()
+
+def _replace_namespaces_in_tag(s):
+    result = io.StringIO()
+    pos = 0
+    colon = s.find(':', pos)
+    while colon>=0:
+        token_start = colon
+        while token_start > 0 and s[token_start-1] not in " <'\"":
+            token_start -=1
+        result.write(s[token_start:colon])
+        pos = colon + 1
+        colon = s.find(':', pos)
+
+    result.write(s[pos:])
+    return result.getvalue()
 
 def _parse_authors(parent):
     author_nodes = [] if parent is None else parent.findall("author")

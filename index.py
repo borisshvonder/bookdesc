@@ -62,7 +62,7 @@ class Index:
                 for book in by_sha1.values():
                     yield book
 
-   def _hash_name(self, name):
+    def _hash_name(self, name):
         "Hash the book name into more compact form"
         # of course, murmurhash will be more effective, but it is another
         # dependency so I have dismissed it

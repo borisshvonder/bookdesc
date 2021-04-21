@@ -12,7 +12,7 @@ import datetime
 import book_model
 import binascii
 
-def to_values(book):
+def to_row(book):
     "Return a list of column values representing a book"
     file = book.file if book.file else book_model.File()
     iso8601 = _iso_8601(file.mod_time)
@@ -39,10 +39,10 @@ class Parser:
     def __init__(self):
         self.parse_header(CSV_HEADER)
 
-    def parse_header(self, header_values):
+    def parse_header(self, header_row):
         "Parse CSV header and determine column order"
         self._cols=[]
-        for val in header_values:
+        for val in header_row:
             v = val.strip().lower()
             func = None
             if v == "name": func = _parse_name
@@ -56,7 +56,7 @@ class Parser:
             elif v == "metatext": func = _parse_metatext
             self._cols.append(func)
 
-    def parse_values(self, values):
+    def parse_row(self, values):
         "Parses the CSV values and returns a Book"
         book = book_model.Book()
         book.file = book_model.File()

@@ -33,16 +33,16 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(",,,,,,,,", self.to_csv_line(book2))
 
     def test_Parser_can_parse_book1(self):
-        book = self.parser.parse_values(self.book1_expected_csv.split(','))
+        book = self.parser.parse_row(self.book1_expected_csv.split(','))
         self.assertBooksEqual(self.book1, book)
 
     def test_Parser_can_parse_empty_book(self):
         book = book_model.Book()
         csv = self.to_csv_line(book)
-        self.parser.parse_values(csv.split(","))
+        self.parser.parse_row(csv.split(","))
 
     def to_csv_line(self, book):
-        return ",".join(csv_parser.to_values(book))
+        return ",".join(csv_parser.to_row(book))
 
     def assertBooksEqual(self, expected, actual):
         self.assertEqual(expected.name, actual.name)

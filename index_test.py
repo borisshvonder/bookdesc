@@ -42,9 +42,11 @@ class IndexTest(unittest.TestCase):
         book = self.book1
         self.fixture.put(book)
         name = book.name
-        got = list(self.fixture.get(name))
+        got = list(self.fixture.list())
         self.assertEqual(1, len(got))
         self.assertEqual(name, got[0].name)
+        self.assertEqual("ddfe163345d338193ac2bdc183f8e9dcff904b43", 
+            self.fixture.digest().hex())
 
     def test_dedup_by_sha(self):
         book = self.book1
@@ -53,19 +55,8 @@ class IndexTest(unittest.TestCase):
         all = list(self.fixture.list())
         self.assertEqual(1, len(all))
         self.assertEqual(book.name, all[0].name)
-
-    def test_two_books_with_same_name(self):
-        book1 = self.book1
-        book2 = book_model.Book()
-        book2.name = book1.name
-        book2.file = book_model.File()
-        book2.file.sha1 = b'020202'
-        self.fixture.put(book1)
-        self.fixture.put(book2)
-        books = self.fixture.get(book1.name)
-        shas = [book.file.sha1 for book in books]
-        self.assertTrue(book1.file.sha1 in shas)
-        self.assertTrue(book2.file.sha1 in shas)
+        self.assertEqual("dc4dd44d3465997a4a04fd070df0bf24b75f9cff", 
+            self.fixture.digest().hex())
 
 
 if __name__ == '__main__':

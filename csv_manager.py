@@ -100,7 +100,6 @@ class Manager:
     def _rebuild(self, filename):
         idx_path = self._idx_path(filename)
         idx = index.Index(idx_path, db_impl=self._idxopen)
-        idx.open()
         parser = csv_parser.Parser()
         csv_path = self._csv_path(filename)
         with self._csvopen(csv_path, "rb") as csv_file:

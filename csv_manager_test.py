@@ -46,13 +46,16 @@ class ManagerTest(unittest.TestCase):
         return result
 
     def test_put_one_book(self):
-       self.manager.put(self.book1)
-       self.manager.build_all_csvs()
-       vcsv = self.virtualfiles["/af.csv.gz"]
-       lines = vcsv.getvalue().split("\r\n")
-       self.assertTrue(len(lines)>=2)
-       self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[0])
-       self.assertEqual('book1,First Author,,,30313032,,,,', lines[1])
+        self.manager.put(self.book1)
+        self.manager.build_all_csvs()
+        vcsv = self.virtualfiles["/af.csv.gz"]
+        lines = vcsv.getvalue().split("\r\n")
+        self.assertTrue(len(lines)>=2)
+        self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[0])
+        self.assertEqual('book1,First Author,,,30313032,,,,', lines[1])
+        self.assertEqual(1, len(self.dbs["/af.idx"].db))
+        self.assertEqual(self.book1, self.dbs["/af.idx"][self.book1.file.sha1])
+
         
 class VirtualFile(io.StringIO):
     def close(self): pass # do not empty buffer like StringIO does

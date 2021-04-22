@@ -18,8 +18,8 @@ class ParserTest(unittest.TestCase):
         book1.file.mod_time = 1618789617
         book1.file.size = 1024
         self.book1 = book1
-        self.book1_expected_csv = "A name,Author1;Author2,1993,"+\
-            "978-3-16-148410-0,3031303230333034,/some.fb2,1024,"+\
+        self.book1_expected_csv = "3031303230333034,A name,Author1;Author2,1993,"+\
+            "978-3-16-148410-0,/some.fb2,1024,"+\
             "2021-04-18T19:46:57-04:00,tag1 tag2"
         book1.metatext = "tag1 tag2"
         self.parser = csv_parser.Parser()

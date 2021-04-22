@@ -5,7 +5,7 @@ only with values (lists). That is because the complexity of quoting and
 unquoting CSVs should be solved at one layer above - perhaps using standard
 "csv" python module """
 
-CSV_HEADER = ("Name", "Authors", "Year", "ISBN", "Sha1", "Path", 
+CSV_HEADER = ("Sha1", "Name", "Authors", "Year", "ISBN", "Path", 
              "Size", "ModTime", "MetaText")
 
 import datetime
@@ -25,7 +25,7 @@ def to_row(book):
     year = str(book.year) if book.year else ""
     size = str(file.size) if file.size else ""
     meta = book.metatext if book.metatext else ""
-    return (name, authors, year, isbn, sha1.hex(), path, size, iso8601, meta)
+    return (sha1.hex(), name, authors, year, isbn, path, size, iso8601, meta)
 
 def _iso_8601(timestamp):
     if timestamp:

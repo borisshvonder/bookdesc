@@ -67,7 +67,7 @@ class ManagerTest(unittest.TestCase):
         lines = vcsv.contents.split('\r\n')
         self.assertTrue(len(lines)>=2)
         self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[0])
-        self.assertTrue(lines[1].startswith('book1,First Author'))
+        self.assertEqual('30313031,book1,First Author,,,,,,', lines[1])
 
     def test_read_csv(self):
         self.write_book_to_vfile("/a.csv.gz", self.book1)
@@ -79,9 +79,9 @@ class ManagerTest(unittest.TestCase):
         lines.sort()
         self.assertEqual(4, len(lines))
         self.assertEqual('', lines[0])
-        self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[1])
-        self.assertTrue(lines[2].startswith('book1,First Author'))
-        self.assertTrue(lines[3].startswith('book2,Second Author'))
+        self.assertEqual('30313031,book1,First Author,,,,,,', lines[1])
+        self.assertEqual('30323032,book2,Second Author,,,,,,', lines[2])
+        self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[3])
 
     def test_will_not_read_csv_if_modtime_matches(self):
         self.write_book_to_vfile("/a.csv.gz", self.book1)
@@ -96,8 +96,8 @@ class ManagerTest(unittest.TestCase):
         lines.sort()
         self.assertEqual(3, len(lines))
         self.assertEqual('', lines[0])
-        self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[1])
-        self.assertTrue(lines[2].startswith('book2,Second Author'))
+        self.assertEqual('30323032,book2,Second Author,,,,,,', lines[1])
+        self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[2])
 
     def write_book_to_vfile(self, path, book):
         with self.csvopen(path, "wb") as csv_file:

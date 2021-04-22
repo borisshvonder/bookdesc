@@ -33,9 +33,9 @@ class Index:
 
     def list(self):
         "Return a generator which will iterate over all books in the index"
-        for key, maybe_book in self._db.items():
+        for key in self._db.keys():
             if not key.startswith(_META_PREFIX):
-                pickled_book = maybe_book
+                pickled_book = self._db[key]
                 book = pickle.loads(pickled_book)
                 yield book
 

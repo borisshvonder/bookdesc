@@ -105,7 +105,7 @@ class Manager:
             old_fname = self._csv_path(fname)
             new_fname = old_fname + "_new"
             _LOGGER.debug("Building %s", new_fname)
-            with self._csvopen(new_fname, "wb") as csv_stream:
+            with self._csvopen(new_fname, "wt") as csv_stream:
                 writer = csv.writer(csv_stream, quoting=csv.QUOTE_MINIMAL)
                 writer.writerow(csv_parser.CSV_HEADER)
                 for book in idx.list():
@@ -132,7 +132,7 @@ class Manager:
 
         _LOGGER.debug("Rebuilding %s", idx_path)
         parser = csv_parser.Parser()
-        with self._csvopen(csv_path, "rb") as csv_file:
+        with self._csvopen(csv_path, "rt") as csv_file:
             reader = csv.reader(csv_file)
             header = True
             for row in reader:

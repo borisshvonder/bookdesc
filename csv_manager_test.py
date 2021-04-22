@@ -6,6 +6,7 @@ import index_test
 import io
 import csv_parser
 import index
+import pickle
 import csv_manager
 import unittest
 
@@ -58,7 +59,8 @@ class ManagerTest(unittest.TestCase):
         self.manager.put(self.book1)
         self.manager.build_all_csvs()
         self.assert_single_book1()
-        self.assertEqual(self.book1, self.dbs["/a.idx"][self.book1.file.sha1])
+        pickled = pickle.dumps(self.book1)
+        self.assertEqual(pickled, self.dbs["/a.idx"][self.book1.file.sha1])
 
     def assert_single_book1(self):
         vcsv = self.virtualfiles["/a.csv.gz"]

@@ -67,6 +67,7 @@ class BookDesc:
                 self.parse(src_or_srcs)
             else:
                 _LOGGER.warning("Input %s cannot be recognized", input)
+
     def parse(self, src_or_srcs):
         "Parse all FB2 file from src or srcs"
         _LOGGER.info("Parsing %s", src_or_srcs)
@@ -97,7 +98,7 @@ class BookDesc:
                 _LOGGER.exception("FB2 '%s' could not be parsed", fb2_src)
                 book = None
             if book: 
-                _LOGGER.info("Found book %s", book.name)
+                _LOGGER.info("Found book '%s'", book.name)
                 self._manager.put(book)
             else:
                 _LOGGER.warning("Couldn't parse book %s", fb2_src)
@@ -115,7 +116,7 @@ def main():
     parser.add_argument('inputs', metavar='INPUT', type=str, nargs='+',
                         help='An input (file or folder) to parse .fb2 from')
     args = parser.parse_args()
-    with BookDesc(args.out) as desc:
+    with BookDesc(args.out[0]) as desc:
         desc.parse_inputs(*args.inputs)
         desc.build_all_csvs()
 

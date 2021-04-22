@@ -32,9 +32,9 @@ import csv_parser
 import gzip
 import os
 import os.path
-import shelve
 import index
 import logging
+import dbm
 
 _LOGGER = logging.getLogger("bookdesc.csv_manager")
 
@@ -75,7 +75,7 @@ class Manager:
 
         # dependency-injectable (for testing)
         self._csvopen = gzip.open
-        self._idxopen = shelve.open
+        self._idxopen = dbm.open
         self._rename = os.rename
         self._mtime = _mtime_os
 

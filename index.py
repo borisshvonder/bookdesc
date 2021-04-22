@@ -6,17 +6,18 @@ Implemented as simple on-disk key-value DB that provides very simple functions:
 3) put/get additional metadata objects (they MUST be pickleable)
 """
 
-import shelve
 import hashlib
+import dbm
+import pickle
 
 _META_PREFIX=b'meta_'
 
 class Index:
-    def __init__(self, filepath, db_impl=shelve.open):
+    def __init__(self, filepath, db_impl=dbm.open):
         "Open/create a new index backed by file at filepath"
         self._filepath = filepath
-        self._db = db_impl(self._filepath, 'c')
-        
+        self._db = db_impl(self._filepath, 'c', )
+
     def close(self):
         "Close the index. MUST be called after use, but only once"
         self._db.close()
@@ -27,24 +28,28 @@ class Index:
     def save(self, book):
         "Put book into the index"
         sha1 = book.file.sha1
-        self._db[sha1] = book
+        pickled = pickle.dumps(book)
+        self._db[sha1] = pickled
 
     def list(self):
         "Return a generator which will iterate over all books in the index"
         for key, maybe_book in self._db.items():
             if not key.startswith(_META_PREFIX):
-                definetly_book = maybe_book
-                yield definetly_book
+                pickled_book = maybe_book
+                book = pickle.loads(pickled_book)
+                yield book
 
     def set(self, key, pickleable_value):
         "Set pickleable metadata value. Key should be a string"
         fullkey = self._fullkey(key)
-        self._db[fullkey] = pickleable_value
+        pickled = pickle.dumps(pickleable_value)
+        self._db[fullkey] = pickled
 
     def get(self, key):
         "Get pickled metadata value. Key must be a string"
         fullkey = self._fullkey(key)
-        return self._db[fullkey]
+        pickled = self._db[fullkey]
+        return pickle.loads(pickled) if pickled else None
 
     def _fullkey(self, key): 
         if type(key) != type(""): raise ValueError("key " + key(key) + \

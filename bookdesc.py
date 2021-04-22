@@ -70,7 +70,7 @@ class BookDesc:
 
     def parse(self, src_or_srcs):
         "Parse all FB2 file from src or srcs"
-        _LOGGER.info("Parsing %s", src_or_srcs)
+        _LOGGER.debug("Scanning %s", src_or_srcs)
         if isinstance(src_or_srcs, sources.Sources):
             srcs = src_or_srcs
             _LOGGER.debug("Found Sources %s", srcs)
@@ -90,6 +90,7 @@ class BookDesc:
 
     def parse_fb2(self, fb2_src):
         "Parse src which MUST be an FB2 file"
+        _LOGGER.info("Parsing %s", fb2_src)
         with fb2_src.open("rb") as stream:
             book = None
             try:

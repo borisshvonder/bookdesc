@@ -71,7 +71,7 @@ class DirectorySources(Sources):
             if self._isfile(fullname):
                 yield source_at(fullname)
             elif self._recursive and self._isdir(fullname):
-                yield DirectorySource(fullname, true)
+                yield DirectorySources(fullname, True)
 
 class FileSource(Source):
     def __init__(self, path):

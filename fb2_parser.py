@@ -189,7 +189,7 @@ def _parse_authors(parent):
     return [_join(ns) for ns in names]
 
 def _join(xml_elements):
-    texts = [e.text for e in xml_elements]
+    texts = [e.text for e in xml_elements if e is not None]
     not_empty = [text for text in texts if text != None and text != ""]
     return " ".join(not_empty)
 

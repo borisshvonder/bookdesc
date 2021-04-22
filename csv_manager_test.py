@@ -10,6 +10,24 @@ import pickle
 import csv_manager
 import unittest
 
+class Book2FileStdTest(unittest.TestCase):
+    def setUp(self):
+        self.book1 = book_model.Book()
+        self.book1.name = "book1"
+        self.book1.authors = ["First Author"]
+        self.book1.file = book_model.File()
+
+    def test_no_authors(self):
+        self.book1.authors = None
+        self.assertEqual("noauthor", csv_manager._book2file_std(self.book1))
+
+    def test_first_author_has_no_last_name(self):
+        self.book1.authors = [""]
+        self.assertEqual("noauthor", csv_manager._book2file_std(self.book1))
+        self.book1.authors = ["", "Second Author"]
+        self.assertEqual("a", csv_manager._book2file_std(self.book1))
+        
+        
 class ManagerTest(unittest.TestCase):
     def setUp(self):
         self.dbs = {}

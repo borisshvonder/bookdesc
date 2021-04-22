@@ -186,11 +186,13 @@ def _parse_authors(parent):
     names = [ (a.find("first-name"), 
                a.find("middle-name"),
                a.find("last-name")) for a in author_nodes]
-    return [_join(ns) for ns in names]
+    joined = [_join(ns) for ns in names]
+    return [a for a in joined if a]
 
 def _join(xml_elements):
     texts = [e.text for e in xml_elements if e is not None]
-    not_empty = [text for text in texts if text != None and text != ""]
+    not_none = [text.strip() for text in texts if text != None]
+    not_empty = [text for text in not_none if text]
     return " ".join(not_empty)
 
 def _first_text(root, *tags):

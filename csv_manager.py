@@ -42,12 +42,11 @@ def _book2file_std(book):
     "Standard implementation of the Book to filename mapping"
     if book.authors:
         # use first letter of the author last name
-        first_author = book.authors[0]
-        names = first_author.split(' ')
-        last_name = names[-1]
-        return last_name[0].lower()
-    else:
-        return "noauthor"
+        for author in book.authors:
+            names = author.split(' ')
+            last_name = names[-1]
+            if len(last_name)>0: return last_name[0].lower()
+    return "noauthor"
 
 def _mtime_os(path):
     "Standard os.stat() implementation for mtime"

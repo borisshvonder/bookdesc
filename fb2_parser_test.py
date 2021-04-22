@@ -158,6 +158,21 @@ class ParseDescriptionTest(unittest.TestCase):
         self.assertEqual(["document-first document-middle document-last"], 
             book.authors)
 
+    def test_will_not_pick_up_author_without_names(self):
+        sample="""
+        <description>
+        <document-info>
+            <author>
+                <first-name>  </first-name>
+                <middle-name></middle-name>
+                <last-name>
+                </last-name>
+            </author>
+        </document-info>
+        </description>"""
+        book = fb2_parser._parse_description(sample)
+        self.assertEqual([], book.authors)
+
     def test_annotation(self):
         sample="""
         <description>

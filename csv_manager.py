@@ -87,7 +87,7 @@ class Manager:
             idx.close()
         self._indexes = {}
 
-    def __enter__(self): pass
+    def __enter__(self): return self
     def __exit__(self, type, value, traceback): self.close()
 
     def put(self, book):

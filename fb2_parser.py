@@ -110,7 +110,13 @@ def _parse_description(xml):
     xml = _remove_namespaces(xml)
     book = book_model.Book()
 
-    desc = ET.fromstring(xml)
+    desc = None
+    try:
+        desc = ET.fromstring(xml)
+    except:
+        _LOGGER.debug(xml)
+        _LOGGER.exception("Can't parse xml")
+        return None
     publish_info = desc.find("publish-info")
     book.name = _first_text(publish_info, "book-name")
     book.year = _first_int(publish_info, "year", "date")
@@ -165,14 +171,15 @@ def _replace_namespaces_in_tag(s):
     colon = s.find(':', pos)
     while colon>=0:
         token_start = colon
-        while token_start > 0 and s[token_start-1] not in " <'\"":
-            token_start -=1
-        result.write(s[token_start:colon])
+        while token_start > 0 and s[token_start-1] not in " </'\"\r\n\f\t":
+            token_start -= 1
+        result.write(s[pos:token_start])
         pos = colon + 1
         colon = s.find(':', pos)
 
     result.write(s[pos:])
-    return result.getvalue()
+    tag = result.getvalue()
+    return tag
 
 def _parse_authors(parent):
     author_nodes = [] if parent is None else parent.findall("author")

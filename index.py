@@ -21,7 +21,7 @@ class Index:
         "Close the index. MUST be called after use, but only once"
         self._db.close()
 
-    def __enter__(self): pass
+    def __enter__(self): return self
     def __exit__(self, type, value, traceback): self.close()
 
     def save(self, book):

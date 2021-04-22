@@ -34,7 +34,7 @@ class Sources:
 
     def __str__(self): return self.path()
 
-    def __enter__(self): pass
+    def __enter__(self): return self
     def __exit__(self, type, value, traceback): self.close()
 
 class Source:

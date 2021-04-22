@@ -41,6 +41,7 @@ import sources
 import logging
 import fb2_parser
 import argparse
+import os.path
 
 _LOGGER = logging.getLogger("bookdesc")
 
@@ -55,49 +56,51 @@ class BookDesc:
     def close(self):
         self._manager.close()
 
-    def __enter__(self): pass
+    def __enter__(self): return self
     def __exit__(self, type, value, traceback): self.close()
 
     def parse_inputs(self, *inputs):
-        "Parse inputs(sequence of strings), only parse .fb2 sources"
+        "Parse inputs(sequence of strings), only parse .fb2 srcs"
         for input in inputs:
-            source_or_sources = sources.source_at(input)
-            if source_or_sources:
-                self.parse(source_or_sources)
+            src_or_srcs = sources.source_at(input)
+            if src_or_srcs:
+                self.parse(src_or_srcs)
             else:
-                _LOGGER.warn("Input %s cannot be recognized", input)
-    def parse(self, source_or_sources):
-        "Parse all FB2 file from source or sources"
-        _LOGGER.info("Parsing %s", source_or_sources)
-        if isinstance(source_or_sources, sources.Sources):
-            sources = source_or_sources
-            _LOGGER.debug("Found Sources %s", sources)
+                _LOGGER.warning("Input %s cannot be recognized", input)
+    def parse(self, src_or_srcs):
+        "Parse all FB2 file from src or srcs"
+        _LOGGER.info("Parsing %s", src_or_srcs)
+        if isinstance(src_or_srcs, sources.Sources):
+            srcs = src_or_srcs
+            _LOGGER.debug("Found Sources %s", srcs)
             try:
-                for source in sources.sources():
-                    self.parse(source)
-            except:
-                _LOGGER.exception("Sources '%s' could not be processed", 
-                    sources)
+                for src in srcs.sources():
+                    self.parse(src)
             finally:
-                sources.close()
-        elif isinstance(source_or_sources, sources.Source):
-            source = source_or_sources
-            _, ext = os.path.splitext(source.path())
-            ext = ext.trim().lower()
+                srcs.close()
+        elif isinstance(src_or_srcs, sources.Source):
+            src = src_or_srcs
+            _, ext = os.path.splitext(src.path())
+            ext = ext.strip().lower()
             if ext == ".fb2":
-                self.parse_fb2(source)
-        else: assert source_or_sources is None, "Got unknown source: "\
-                    + str(source_or_sources)
+                self.parse_fb2(src)
+        else: assert src_or_srcs is None, "Got unknown src: "\
+                    + str(src_or_srcs)
 
-    def parse_fb2(self, fb2_source):
-        "Parse source which MUST be an FB2 file"
-        with fb2_source.open("wb") as stream:
-            book = fb2_parser.parse(stream, buffer=self._parse_buffer)
+    def parse_fb2(self, fb2_src):
+        "Parse src which MUST be an FB2 file"
+        with fb2_src.open("rb") as stream:
+            book = None
+            try:
+                book = fb2_parser.parse(stream, buffer=self._parse_buffer)
+            except:
+                _LOGGER.exception("FB2 '%s' could not be parsed", fb2_src)
+                book = None
             if book: 
                 _LOGGER.info("Found book %s", book.name)
                 self._manager.put(book)
             else:
-                _LOGGER.warn("Couldn't parse book %s", fb2_source)
+                _LOGGER.warning("Couldn't parse book %s", fb2_src)
 
     def build_all_csvs(self):
         _LOGGER.debug("Rebuilding CSVs")
@@ -112,9 +115,9 @@ def main():
     parser.add_argument('inputs', metavar='INPUT', type=str, nargs='+',
                         help='An input (file or folder) to parse .fb2 from')
     args = parser.parse_args()
-    with BookDesk(args.out) as desc:
-        desc.parse_inputs(args.inputs)
-        desc.rebuild_all_csvs()
+    with BookDesc(args.out) as desc:
+        desc.parse_inputs(*args.inputs)
+        desc.build_all_csvs()
 
 if __name__ == '__main__':
     main()

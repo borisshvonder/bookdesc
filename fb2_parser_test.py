@@ -175,6 +175,15 @@ class ParseDescriptionTest(unittest.TestCase):
         </description>"""
         fb2_parser._parse_description(sample)
 
+    def test_will_correctly_trim_ns_from_attr(self):
+        sample="""<description>
+        <title-info>
+            <annotation><p><a l:href="http://kats/">http://kats/</a></p></annotation>
+        </title-info>
+        </description>"""
+        book = fb2_parser._parse_description(sample)
+        self.assertEqual('http://kats/', book.annotation)
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -34,7 +34,7 @@ import os
 import os.path
 import index
 import logging
-import dbm
+import dbm.ndbm
 
 _LOGGER = logging.getLogger("bookdesc.csv_manager")
 
@@ -74,7 +74,7 @@ class Manager:
 
         # dependency-injectable (for testing)
         self._csvopen = gzip.open
-        self._idxopen = dbm.open
+        self._idxopen = dbm.ndbm.open
         self._rename = os.rename
         self._mtime = _mtime_os
 

@@ -17,6 +17,9 @@ class InMemoryDb:
     def __getitem__(self, key):
         return self.db.get(key)
 
+    def items(self):
+        return self.db.items()
+
     def values(self):
         return self.db.values()
 
@@ -59,6 +62,7 @@ class IndexTest(unittest.TestCase):
     def test_set_put_metadata(self):
         self.fixture.set("key", "value")
         self.assertEqual("value", self.fixture.get("key"))
+        self.assertEqual(0, len(list(self.fixture.list())))
 
 
 

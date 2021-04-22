@@ -5,6 +5,7 @@ import book_model
 import index_test
 import io
 import csv_parser
+import index
 import csv_manager
 import unittest
 
@@ -12,10 +13,12 @@ class ManagerTest(unittest.TestCase):
     def setUp(self):
         self.dbs = {}
         self.virtualfiles = {} # in-memory filesystem
-        self.manager = csv_manager.Manager(path="/",
-            csvopen = self.csvopen,
-            idxopen = self.idxopen,
-            rename = self.rename)
+        self.manager = csv_manager.Manager(path="/")
+        self.manager._csvopen = self.csvopen
+        self.manager._idxopen = self.idxopen
+        self.manager._rename = self.rename
+        self.manager._mtime = self.mtime
+
         self.book1 = book_model.Book()
         self.book1.name = "book1"
         self.book1.authors = ["First Author"]
@@ -34,6 +37,8 @@ class ManagerTest(unittest.TestCase):
         old = self.virtualfiles[old_name]
         self.virtualfiles[new_name] = old
         del self.virtualfiles[old_name]
+
+    def mtime(self, path): return (0, 0)
 
     def csvopen(self, path, mode):
         vfile = self.virtualfiles.get(path)
@@ -63,21 +68,41 @@ class ManagerTest(unittest.TestCase):
         self.assertTrue(lines[1].startswith('book1,First Author'))
 
     def test_read_csv(self):
-        with self.csvopen("/a.csv.gz", "wb") as csv_file:
-            csv_file.write(','.join(csv_parser.CSV_HEADER))
-            csv_file.write('\r\n')
-            csv_file.write('book1,First Author,,,30313032,,,,')
-            csv_file.write('\r\n')
+        self.write_book_to_vfile("/a.csv.gz", self.book1)
         self.assert_single_book1()
         self.manager.put(self.book2)
         self.manager.build_all_csvs()
         vcsv = self.virtualfiles["/a.csv.gz"]
         lines = vcsv.contents.split("\r\n")
         lines.sort()
+        self.assertEqual(4, len(lines))
         self.assertEqual('', lines[0])
         self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[1])
         self.assertTrue(lines[2].startswith('book1,First Author'))
         self.assertTrue(lines[3].startswith('book2,Second Author'))
+
+    def test_will_not_read_csv_if_modtime_matches(self):
+        self.write_book_to_vfile("/a.csv.gz", self.book1)
+        idx = index.Index("/a.idx", db_impl=self.idxopen)
+        idx.set("mtime", self.mtime("/a.csv.gz"))
+        idx.close()
+        self.assert_single_book1()
+        self.manager.put(self.book2)
+        self.manager.build_all_csvs()
+        vcsv = self.virtualfiles["/a.csv.gz"]
+        lines = vcsv.contents.split("\r\n")
+        lines.sort()
+        self.assertEqual(3, len(lines))
+        self.assertEqual('', lines[0])
+        self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[1])
+        self.assertTrue(lines[2].startswith('book2,Second Author'))
+
+    def write_book_to_vfile(self, path, book):
+        with self.csvopen(path, "wb") as csv_file:
+            csv_file.write(','.join(csv_parser.CSV_HEADER))
+            csv_file.write('\r\n')
+            csv_file.write(','.join(csv_parser.to_row(book)))
+            csv_file.write('\r\n')
         
 
 class VirtualFile:

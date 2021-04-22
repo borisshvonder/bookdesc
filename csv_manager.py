@@ -12,13 +12,16 @@ To make its work efficient, the manager also builds CSV indexes in files with
 
 These indexes are rebuilt from the CSVs on first attempt to use the index. This
 is done because parsing CSVs is faster than parsing FB2s, and, because FB2s may
-not be available already.
+not be available already. 
+
+The manager remembers the CSV file length + modification time in the index, so 
+if that information matches, there is no need to rebuild the index.
 
 When index is re-built, the user of the manager may add more books to it. At 
 the end, the user may ask the manager to re-build CSVs from the indexes.
 
 Therefore, indexes can be removed by the user at any time prior to bookdesk run
-or kept in place since it might be slightly more efficient to keep them.
+or kept in place since it is more efficient to keep them.
 
 The CSV files are compressed using gzip compression by default
 """
@@ -32,7 +35,7 @@ import os.path
 import shelve
 import index
 
-def book2file_std(book):
+def _book2file_std(book):
     "Standard implementation of the Book to filename mapping"
     if book.authors:
         # use first letter of the author last name
@@ -43,28 +46,36 @@ def book2file_std(book):
     else:
         return "noauthor"
 
+def _mtime_os(path):
+    "Standard os.stat() implementation for mtime"
+    try:
+        stat = os.stat(path)
+        return (stat.st_mtime, stat.st_size)
+    except FileNotFoundError:
+        return None
+
 class Manager:
-    def __init__(self, path, book2file=book2file_std, csvopen=gzip.open,
-                       idxopen=shelve.open, csv_ext=".csv.gz", idx_ext=".idx", 
-                       rename=os.rename):
+    def __init__(self, path, book2file=_book2file_std, csv_ext=".csv.gz", 
+                       idx_ext=".idx"):
         """@param path The root path at which all files have to be kept
            @param book2file Mapping function, takes in Book, should resolve to
-                  filename (without .csv suffix) where Book has to be stored.
-           @param csvopen method for opening CSV files, by default use gzip"""
+                  filename (without .csv suffix) where Book has to be stored."""
         assert book2file
         assert path
-        assert csvopen
         assert csv_ext is not None
         assert idx_ext is not None
         assert csv_ext != idx_ext
-        assert rename
-        self._book2file = book2file
         self._path = path
-        self._csvopen = csvopen
-        self._idxopen = idxopen
+        self._book2file = book2file
         self._csv_ext = csv_ext
         self._idx_ext = idx_ext
-        self._rename = rename
+
+        # dependency-injectable (for testing)
+        self._csvopen = gzip.open
+        self._idxopen = shelve.open
+        self._rename = os.rename
+        self._mtime = _mtime_os
+
         self._indexes = {}
 
     def close(self):
@@ -96,13 +107,22 @@ class Manager:
                 for book in idx.list():
                     row = csv_parser.to_row(book)
                     writer.writerow(row)
+            idx.set("mtime", self._mtime(new_fname))
             self._rename(new_fname, old_fname)
 
     def _rebuild(self, filename):
         idx_path = self._idx_path(filename)
         idx = index.Index(idx_path, db_impl=self._idxopen)
-        parser = csv_parser.Parser()
         csv_path = self._csv_path(filename)
+
+        current_mtime = self._mtime(csv_path)
+        file_does_not_exist = not current_mtime
+        if file_does_not_exist: return idx
+
+        index_mtime_matches_current = current_mtime == idx.get("mtime")
+        if index_mtime_matches_current: return idx
+
+        parser = csv_parser.Parser()
         with self._csvopen(csv_path, "rb") as csv_file:
             reader = csv.reader(csv_file)
             header = True

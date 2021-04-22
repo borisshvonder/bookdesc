@@ -9,6 +9,8 @@ Implemented as simple on-disk key-value DB that provides very simple functions:
 import shelve
 import hashlib
 
+_META_PREFIX=b'meta_'
+
 class Index:
     def __init__(self, filepath, db_impl=shelve.open):
         "Open/create a new index backed by file at filepath"
@@ -29,8 +31,10 @@ class Index:
 
     def list(self):
         "Return a generator which will iterate over all books in the index"
-        for book in self._db.values():
-            yield book
+        for key, maybe_book in self._db.items():
+            if not key.startswith(_META_PREFIX):
+                definetly_book = maybe_book
+                yield definetly_book
 
     def set(self, key, pickleable_value):
         "Set pickleable metadata value. Key should be a string"
@@ -47,4 +51,6 @@ class Index:
             " is not a string (type(key)==" + str(type(key)) + ")")
 
         # ensure we never overlap those keys with sha1 book keys
-        return ("META_" + key).encode("utf-8")
+        b = bytearray(_META_PREFIX)
+        b.extend(key.encode('utf-8'))
+        return bytes(b)

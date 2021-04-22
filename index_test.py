@@ -42,30 +42,23 @@ class IndexTest(unittest.TestCase):
 
     def test_put_one_book(self):
         book = self.book1
-        self.fixture.put(book)
+        self.fixture.save(book)
         name = book.name
         got = list(self.fixture.list())
         self.assertEqual(1, len(got))
         self.assertEqual(name, got[0].name)
-        self.assertEqual("ddfe163345d338193ac2bdc183f8e9dcff904b43", 
-            self.fixture.digest().hex())
 
     def test_dedup_by_sha(self):
         book = self.book1
-        self.fixture.put(book)
-        self.fixture.put(book)
+        self.fixture.save(book)
+        self.fixture.save(book)
         all = list(self.fixture.list())
         self.assertEqual(1, len(all))
         self.assertEqual(book.name, all[0].name)
-        self.assertEqual("dc4dd44d3465997a4a04fd070df0bf24b75f9cff", 
-            self.fixture.digest().hex())
 
-    def test_digest_will_be_kept_after_closed(self):
-        self.fixture.put(self.book1)
-        digest = self.fixture.digest()
-        self.fixture.close()
-        self.open_fixture()
-        self.assertEqual(digest.hex(), self.fixture.digest().hex())
+    def test_set_put_metadata(self):
+        self.fixture.set("key", "value")
+        self.assertEqual("value", self.fixture.get("key"))
 
 
 

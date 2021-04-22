@@ -83,7 +83,7 @@ class Manager:
         if not idx:
             idx = self._rebuild(filename)
             self._indexes[filename] = idx
-        idx.put(book)
+        idx.save(book)
 
     def build_all_csvs(self):
         "Rebuild all CSV files for which we have modified the indexes"
@@ -112,7 +112,7 @@ class Manager:
                     header = False
                 else:
                     book = parser.parse_row(row)
-                    idx.put(book)
+                    idx.save(book)
         return idx
 
     def _csv_path(self, filename):

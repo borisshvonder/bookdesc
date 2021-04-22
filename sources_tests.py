@@ -13,8 +13,8 @@ class FileSourceTest(unittest.TestCase):
         self.assertEqual("/some/path", self.fs.path())
 
     def test_open(self):
-        self.fs._open = lambda path: path
-        self.assertEqual("/some/path", self.fs.open())
+        self.fs._open = lambda path, mode: path+':'+mode
+        self.assertEqual("/some/path:wb", self.fs.open("wb"))
 
 class DirectorySourcesTest(unittest.TestCase):
     def setUp(self):
@@ -49,8 +49,9 @@ class DirectorySourcesTest(unittest.TestCase):
         self.ds._isfile = self.simple_isfile
         self.ds._isdir = self.simple_isdir
         sources = list(self.ds.sources())
-        self.assertEqual(os.path.join(self.ds.path(), "dir", "morefiles"), 
+        self.assertEqual(os.path.join(self.ds.path(), "dir"), 
             sources[0].path())
+        self.assertTrue(isinstance(source[0], Sources))
         self.assertEqual(os.path.join(self.ds.path(), "file"), 
             sources[1].path())
         self.assertEqual(2, len(sources))

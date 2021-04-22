@@ -24,13 +24,15 @@ class Sources:
         pass
 
     def sources(self): 
-        "Return a generator of Source's"
+        "Return a generator of Source and Sources"
         pass
 
     def close(self):
         """The Sources object has to be closed after all its sources
            no longer in use"""
         pass
+
+    def __str__(self): return self.path()
 
     def __enter__(self): pass
     def __exit__(self, type, value, traceback): self.close()
@@ -46,6 +48,8 @@ class Source:
         """Return file-like object that can be read from. It has to be
            closed after it is no longer in use"""
         pass
+
+    def __str__(self): return self.path()
 
 class DirectorySources(Sources):
     """Represents a directory as a source of files"""
@@ -65,10 +69,9 @@ class DirectorySources(Sources):
         for name in self._listdir(path):
             fullname = os.path.join(path, name)
             if self._isfile(fullname):
-                yield FileSource(fullname)
+                yield source_at(fullname)
             elif self._recursive and self._isdir(fullname):
-                for source in self._sources(fullname):
-                    yield source
+                yield DirectorySource(fullname, true)
 
 class FileSource(Source):
     def __init__(self, path):
@@ -77,4 +80,4 @@ class FileSource(Source):
 
     def path(self): return self._path
 
-    def open(self): return self._open(self._path)
+    def open(self, mode): return self._open(self._path, mode)

@@ -34,6 +34,9 @@ import os
 import os.path
 import shelve
 import index
+import logging
+
+_LOGGER = logging.getLogger("bookdesc.csv_manager")
 
 def _book2file_std(book):
     "Standard implementation of the Book to filename mapping"
@@ -101,6 +104,7 @@ class Manager:
         for fname, idx in self._indexes.items():
             old_fname = self._csv_path(fname)
             new_fname = old_fname + "_new"
+            _LOGGER.debug("Building %s", new_fname)
             with self._csvopen(new_fname, "wb") as csv_stream:
                 writer = csv.writer(csv_stream, quoting=csv.QUOTE_MINIMAL)
                 writer.writerow(csv_parser.CSV_HEADER)
@@ -109,6 +113,7 @@ class Manager:
                     writer.writerow(row)
             idx.set("mtime", self._mtime(new_fname))
             self._rename(new_fname, old_fname)
+            _LOGGER.info("Built %s", old_fname)
 
     def _rebuild(self, filename):
         idx_path = self._idx_path(filename)
@@ -120,8 +125,12 @@ class Manager:
         if file_does_not_exist: return idx
 
         index_mtime_matches_current = current_mtime == idx.get("mtime")
-        if index_mtime_matches_current: return idx
+        if index_mtime_matches_current: 
+            _LOGGER.debug("mtime matches between %s and %s", 
+                idx_path, csv_path)
+            return idx
 
+        _LOGGER.debug("Rebuilding %s", idx_path)
         parser = csv_parser.Parser()
         with self._csvopen(csv_path, "rb") as csv_file:
             reader = csv.reader(csv_file)
@@ -135,6 +144,7 @@ class Manager:
                     idx.save(book)
         current_mtime = self._mtime(csv_path)
         idx.set("mtime", current_mtime)
+        _LOGGER.info("Rebuilt %s", idx_path)
         return idx
 
     def _csv_path(self, filename):

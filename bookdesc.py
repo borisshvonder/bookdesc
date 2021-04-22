@@ -36,41 +36,86 @@ h1. Non-goals
 * No import from existing databases and/or CSVs.
 """
 
+import csv_manager
+import sources
+import logging
+import fb2_parser
+import argparse
+
+_LOGGER = logging.getLogger("bookdesc")
+
 class BookDesc:
-    "Frontend class for the entire library, also has main() method"
+    "Frontend class for the entire library"
     
-    def __init__(self): pass
+    def __init__(self, outpath):
+        self._manager = csv_manager.Manager(outpath)
+        _LOGGER.debug("Initialized Manager at %s", outpath)
+        self._parse_buffer = bytearray(1024*1024)
 
-    def parse_inputs(self, inputs, outpath):
-        "Parse inputs(sequence of strings), generate CSVs to output folder"
-        with self.new_output_cache(outpath) as cache:
-            for input in inputs:
-                with self.open_input(input) as sources:
-                    for file_source in sources:
-                        self.parse_input(cache, file_source)
-
-    def new_output_cache(self, outpath):
-        "Create new instance of the output cache"
-
-    def open_input(self, input_path):
-        """Take input path and return a sequence of FileSources in that path.
-           Single file, folder with subfolders, .zip files are supported"""
-
-    def parse_input(self, output_cache, file_source):
-        "Parse single FileSource and put it to output_cache"
-
-class FileSources:
-    "A sequence of FileSource's that MUST be closed once it is no longer used"
+    def close(self):
+        self._manager.close()
 
     def __enter__(self): pass
+    def __exit__(self, type, value, traceback): self.close()
 
-    def __exit__(self, type, value, traceback): pass
+    def parse_inputs(self, *inputs):
+        "Parse inputs(sequence of strings), only parse .fb2 sources"
+        for input in inputs:
+            source_or_sources = sources.source_at(input)
+            if source_or_sources:
+                self.parse(source_or_sources)
+            else:
+                _LOGGER.warn("Input %s cannot be recognized", input)
+    def parse(self, source_or_sources):
+        "Parse all FB2 file from source or sources"
+        _LOGGER.info("Parsing %s", source_or_sources)
+        if isinstance(source_or_sources, sources.Sources):
+            sources = source_or_sources
+            _LOGGER.debug("Found Sources %s", sources)
+            try:
+                for source in sources.sources():
+                    self.parse(source)
+            except:
+                _LOGGER.exception("Sources '%s' could not be processed", 
+                    sources)
+            finally:
+                sources.close()
+        elif isinstance(source_or_sources, sources.Source):
+            source = source_or_sources
+            _, ext = os.path.splitext(source.path())
+            ext = ext.trim().lower()
+            if ext == ".fb2":
+                self.parse_fb2(source)
+        else: assert source_or_sources is None, "Got unknown source: "\
+                    + str(source_or_sources)
 
-class FileSource:
-    "Represents single file which contains a Book"
+    def parse_fb2(self, fb2_source):
+        "Parse source which MUST be an FB2 file"
+        with fb2_source.open("wb") as stream:
+            book = fb2_parser.parse(stream, buffer=self._parse_buffer)
+            if book: 
+                _LOGGER.info("Found book %s", book.name)
+                self._manager.put(book)
+            else:
+                _LOGGER.warn("Couldn't parse book %s", fb2_source)
 
-    def path(self):
-        "Returns a path at which this file is located (might be inside .zip)"
+    def build_all_csvs(self):
+        _LOGGER.debug("Rebuilding CSVs")
+        self._manager.build_all_csvs()
+        _LOGGER.info("CSVs rebuilt")
 
-    def open(self):
-        "Open file and return a readable object (that must be closed after use)"
+def main():
+    logging.basicConfig(level=logging.DEBUG)
+    parser = argparse.ArgumentParser(description='Parse .fb2 files into CSVs')
+    parser.add_argument('out', metavar='OUT', type=str, nargs=1,
+                        help='an output file to put CSVs to')
+    parser.add_argument('inputs', metavar='INPUT', type=str, nargs='+',
+                        help='An input (file or folder) to parse .fb2 from')
+    args = parser.parse_args()
+    with BookDesk(args.out) as desc:
+        desc.parse_inputs(args.inputs)
+        desc.rebuild_all_csvs()
+
+if __name__ == '__main__':
+    main()
+

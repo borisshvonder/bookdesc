@@ -35,12 +35,13 @@ import index
 def book2file_std(book):
     "Standard implementation of the Book to filename mapping"
     if book.authors:
-        # use first letter of the author last and first name
+        # use first letter of the author last name
         first_author = book.authors[0]
         names = first_author.split(' ')
-        first_name = names[0]
         last_name = names[-1]
-        return (last_name[0]+first_name[0]).lower()
+        return last_name[0].lower()
+    else:
+        return "noauthor"
 
 class Manager:
     def __init__(self, path, book2file=book2file_std, csvopen=gzip.open,
@@ -106,7 +107,6 @@ class Manager:
             reader = csv.reader(csv_file)
             header = True
             for row in reader:
-                print(row)
                 if header:
                     parser.parse_header(row)
                     header = False

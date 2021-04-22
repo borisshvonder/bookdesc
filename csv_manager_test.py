@@ -20,7 +20,12 @@ class ManagerTest(unittest.TestCase):
         self.book1.name = "book1"
         self.book1.authors = ["First Author"]
         self.book1.file = book_model.File()
-        self.book1.file.sha1 = b'0102'
+        self.book1.file.sha1 = b'0101'
+        self.book2 = book_model.Book()
+        self.book2.name = "book2"
+        self.book2.authors = ["Second Author"]
+        self.book2.file = book_model.File()
+        self.book2.file.sha1 = b'0202'
 
     def tearDown(self):
         self.manager.close()
@@ -31,12 +36,11 @@ class ManagerTest(unittest.TestCase):
         del self.virtualfiles[old_name]
 
     def csvopen(self, path, mode):
-        if mode.startswith("r"):
-            existing = self.virtualfiles.get(path)
-            if existing: return existing
-        new_file = VirtualFile()
-        self.virtualfiles[path] = new_file
-        return new_file
+        vfile = self.virtualfiles.get(path)
+        if not vfile:
+            vfile = VirtualFile(path)
+            self.virtualfiles[path] = vfile
+        return vfile.open()
 
     def idxopen(self, path, mode):
         result = self.dbs.get(path)
@@ -48,17 +52,53 @@ class ManagerTest(unittest.TestCase):
     def test_put_one_book(self):
         self.manager.put(self.book1)
         self.manager.build_all_csvs()
-        vcsv = self.virtualfiles["/af.csv.gz"]
-        lines = vcsv.getvalue().split("\r\n")
+        self.assert_single_book1()
+        self.assertEqual(self.book1, self.dbs["/a.idx"][self.book1.file.sha1])
+
+    def assert_single_book1(self):
+        vcsv = self.virtualfiles["/a.csv.gz"]
+        lines = vcsv.contents.split('\r\n')
         self.assertTrue(len(lines)>=2)
         self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[0])
-        self.assertEqual('book1,First Author,,,30313032,,,,', lines[1])
-        self.assertEqual(1, len(self.dbs["/af.idx"].db))
-        self.assertEqual(self.book1, self.dbs["/af.idx"][self.book1.file.sha1])
+        self.assertTrue(lines[1].startswith('book1,First Author'))
+
+    def test_read_csv(self):
+        with self.csvopen("/a.csv.gz", "wb") as csv_file:
+            csv_file.write(','.join(csv_parser.CSV_HEADER))
+            csv_file.write('\r\n')
+            csv_file.write('book1,First Author,,,30313032,,,,')
+            csv_file.write('\r\n')
+        self.assert_single_book1()
+        self.manager.put(self.book2)
+        self.manager.build_all_csvs()
+        vcsv = self.virtualfiles["/a.csv.gz"]
+        lines = vcsv.contents.split("\r\n")
+        lines.sort()
+        self.assertEqual('', lines[0])
+        self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[1])
+        self.assertTrue(lines[2].startswith('book1,First Author'))
+        self.assertTrue(lines[3].startswith('book2,Second Author'))
+        
+
+class VirtualFile:
+    def __init__(self, path):
+        self.path = path
+        self.contents = ""
+
+    def open(self): return VirtualStream(self)
+
+    def __str__(self): return self.path
 
         
-class VirtualFile(io.StringIO):
-    def close(self): pass # do not empty buffer like StringIO does
+class VirtualStream(io.StringIO):
+    def __init__(self, vfile):
+        io.StringIO.__init__(self, vfile.contents)
+        self.vfile = vfile
+
+    def close(self): 
+        io.StringIO.flush(self)
+        self.vfile.contents = self.getvalue()
+        #print(str(self.vfile) + "->" + self.vfile.contents)
 
 if __name__ == '__main__':
     unittest.main()

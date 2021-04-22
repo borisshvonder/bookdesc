@@ -133,6 +133,8 @@ class Manager:
                 else:
                     book = parser.parse_row(row)
                     idx.save(book)
+        current_mtime = self._mtime(csv_path)
+        idx.set("mtime", current_mtime)
         return idx
 
     def _csv_path(self, filename):

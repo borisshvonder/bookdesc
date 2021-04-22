@@ -9,15 +9,19 @@ Implemented as simple on-disk key-value DB that provides very simple functions:
 import shelve
 import hashlib
 
+_DIGEST_KEY = b'digest'
+
 class Index:
     def __init__(self, filepath, db_impl=shelve.open):
         "Open/create a new index backed by file at filepath"
         self._filepath = filepath
         self._db = db_impl(self._filepath, 'c')
-        self._digest = hashlib.new("sha1")
+        self._digest = self._db[_DIGEST_KEY]
+        if not self._digest: self._digest = hashlib.new("sha1")
         
     def close(self):
         "Close the index. MUST be called after use, but only once"
+        self._db[_DIGEST_KEY] = self._digest
         self._db.close()
 
     def __enter__(self): pass

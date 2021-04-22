@@ -31,8 +31,10 @@ class IndexTest(unittest.TestCase):
         self.book1.file = book_model.File()
         self.book1.file.sha1 = b'01'
         self.db = InMemoryDb()
+        self.open_fixture()
+
+    def open_fixture(self):
         self.fixture = index.Index("file", db_impl=lambda f,c: self.db)
-        self.fixture.__enter__()
 
     def tearDown(self):
         self.fixture.__exit__(None, None, None)
@@ -57,6 +59,14 @@ class IndexTest(unittest.TestCase):
         self.assertEqual(book.name, all[0].name)
         self.assertEqual("dc4dd44d3465997a4a04fd070df0bf24b75f9cff", 
             self.fixture.digest().hex())
+
+    def test_digest_will_be_kept_after_closed(self):
+        self.fixture.put(self.book1)
+        digest = self.fixture.digest()
+        self.fixture.close()
+        self.open_fixture()
+        self.assertEqual(digest.hex(), self.fixture.digest().hex())
+
 
 
 if __name__ == '__main__':

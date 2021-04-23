@@ -48,7 +48,7 @@ class Index:
     def get(self, key):
         "Get pickled metadata value. Key must be a string"
         fullkey = self._fullkey(key)
-        pickled = self._db[fullkey]
+        pickled = self._db.get(fullkey)
         return pickle.loads(pickled) if pickled else None
 
     def _fullkey(self, key): 

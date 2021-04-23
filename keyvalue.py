@@ -1,47 +1,33 @@
 # -*- coding: UTF-8 -*-
 """Provides access to best k-v store available"""
 
+import logging
+import dbm.dumb # ndbm has serious problems with large number od keys
+
 _BACKENDS = {}
 try:
-    import lmdb  
+    from bplustree import bplustree  
+    from bplustree.bplustree import serializer
 
-    class LMDB:
-        def __init__(self, path):
-            self._env = lmdb.Environment(path, subdir=False, readonly=False,
-                metasync=False, sync=False, create=True, readahead=False,
-                writemap=True, meminit=True, map_async=True)
+    class BytesSerializer(serializer.Serializer):
+        def serialize(self, obj : bytes , key_size: int) -> bytes:
+            assert len(obj) <= key_size
+            return obj
 
-        def __setitem__(self, key, value):
-            with self._env.begin() as txn:
-                txn.put(key, value)
-                txn.commit()
+        def deserialize(self, data: bytes) -> bytes:
+            return data
 
-        def __getitem__(self, key):
-            with self._env.begin() as txn:
-                result = txn.get(key)
-                txn.commit()
-                return result
+    def _bplustree(path):
+        return bplustree.BPlusTree(path, 
+            serializer=BytesSerializer(),
+            key_size=20)
 
-        def items(self):
-            with self._env.begin() as txn:
-                cursor = txn.cursor()
-                if cursor.first():
-                    yield cursor.key(), cursor.value()
-                while cursor.next():
-                    yield cursor.key(), cursor.value()
 
-        def close(self):
-            self._env.close()
-
-        def __enter__(self): return self
-        def __exit__(self, type, value, traceback): self.close()
-
-    backends["lmdb"] = LMDB
+    _BACKENDS["bplustree"] = _bplustree
 
 except ImportError:
-    lmdb = None
+    bplustree = None
 
-import dbm.dumb # ndbm has serious problems with large number od keys
 
 class InMemoryDb:
     def __init__(self, path):
@@ -54,6 +40,9 @@ class InMemoryDb:
         self.db[key] = value
 
     def __getitem__(self, key):
+        return self.db[key]
+
+    def get(self, key):
         return self.db.get(key)
 
     def items(self):
@@ -74,6 +63,11 @@ class DumbDb:
         self._db[key] = value
 
     def __getitem__(self, key):
+        ret = self._db[key]
+        if ret is None: raise KeyError(key)
+        return ret
+
+    def get(self, key):
         return self._db[key]
 
     def items(self):
@@ -95,9 +89,12 @@ def open(path, backend=None):
         if not bak: raise ValueError("Backend " + backend + " is unavaliable")
         return bak(path)
     else:
-        if lmdb: 
-            return LMDB(path)
+        if bplustree: 
+            logging.debug("Opening bplustree at path %s", path)
+            return _bplustree(path)
         else:
+            logging.info("No bplustree available using dbm.dump implementation 
+                at %s", path)
             return DumbDb(path)
 
 def backends(): return list(_BACKENDS.keys())

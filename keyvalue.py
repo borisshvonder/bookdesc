@@ -10,8 +10,8 @@ try:
     #import os.path
     #bplustree_base = os.path.join(os.path.dirname(sys.argv[0]), "bplustree")
     #sys.path.append(bplustree_base)
-    import bplustree  
-    from bplustree import serializer
+    import bplustreebranded
+    from bplustreebranded import serializer
 
     class BytesSerializer(serializer.Serializer):
         def serialize(self, obj : bytes , key_size: int) -> bytes:
@@ -22,7 +22,7 @@ try:
             return data
 
     def _bplustree(path):
-        return bplustree.BPlusTree(path, 
+        return bplustreebranded.BPlusTree(path, 
             serializer=BytesSerializer(),
             key_size=20)
 
@@ -30,7 +30,7 @@ try:
     _BACKENDS["bplustree"] = _bplustree
 
 except ImportError:
-    bplustree = None
+    bplustreebranded = None
 
 
 class InMemoryDb:
@@ -94,7 +94,7 @@ def open(path, backend=None):
         if not bak: raise ValueError("Backend " + backend + " is unavaliable")
         return bak(path)
     else:
-        if bplustree: 
+        if bplustreebranded: 
             logging.debug("Opening bplustree at path %s", path)
             return _bplustree(path)
         else:

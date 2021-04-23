@@ -8,8 +8,8 @@ _BACKENDS = {}
 try:
     import sys
     import os.path
-    sys.path.append(os.path.dirname(sys.argv[0]))
-    print(sys.path)
+    bplustree_base = os.path.join(os.path.dirname(sys.argv[0]), "bplustree")
+    sys.path.append(bplustree_base)
     import bplustree  
     from bplustree import serializer
 

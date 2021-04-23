@@ -6,8 +6,12 @@ import dbm.dumb # ndbm has serious problems with large number od keys
 
 _BACKENDS = {}
 try:
-    from bplustree import bplustree  
-    from bplustree.bplustree import serializer
+    import sys
+    import os.path
+    sys.path.append(os.path.dirname(sys.argv[0]))
+    print(sys.path)
+    import bplustree  
+    from bplustree import serializer
 
     class BytesSerializer(serializer.Serializer):
         def serialize(self, obj : bytes , key_size: int) -> bytes:
@@ -63,12 +67,13 @@ class DumbDb:
         self._db[key] = value
 
     def __getitem__(self, key):
-        ret = self._db[key]
-        if ret is None: raise KeyError(key)
-        return ret
+        return self._db[key]
 
     def get(self, key):
-        return self._db[key]
+        if key in self._db:
+            return self._db[key]
+        else:
+            return None
 
     def items(self):
         for key in self._db.keys():
@@ -93,7 +98,7 @@ def open(path, backend=None):
             logging.debug("Opening bplustree at path %s", path)
             return _bplustree(path)
         else:
-            logging.info("No bplustree available using dbm.dump implementation 
+            logging.info("No bplustree available using dbm.dump implementation\
                 at %s", path)
             return DumbDb(path)
 

@@ -6,10 +6,10 @@ import dbm.dumb # ndbm has serious problems with large number od keys
 
 _BACKENDS = {}
 try:
-    import sys
-    import os.path
-    bplustree_base = os.path.join(os.path.dirname(sys.argv[0]), "bplustree")
-    sys.path.append(bplustree_base)
+    #import sys
+    #import os.path
+    #bplustree_base = os.path.join(os.path.dirname(sys.argv[0]), "bplustree")
+    #sys.path.append(bplustree_base)
     import bplustree  
     from bplustree import serializer
 

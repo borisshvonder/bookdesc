@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 import book_model
-import index_test
+import keyvalue
 import io
 import csv_parser
 import index
@@ -32,9 +32,8 @@ class ManagerTest(unittest.TestCase):
     def setUp(self):
         self.dbs = {}
         self.virtualfiles = {} # in-memory filesystem
-        self.manager = csv_manager.Manager(path="/")
+        self.manager = csv_manager.Manager(path="/", db_impl=self.idxopen)
         self.manager._csvopen = self.csvopen
-        self.manager._idxopen = self.idxopen
         self.manager._rename = self.rename
         self.manager._mtime = self.mtime
 
@@ -66,10 +65,10 @@ class ManagerTest(unittest.TestCase):
             self.virtualfiles[path] = vfile
         return vfile.open()
 
-    def idxopen(self, path, mode):
+    def idxopen(self, path):
         result = self.dbs.get(path)
         if not result:
-            result = index_test.InMemoryDb()
+            result = keyvalue.open(path, backend="memory")
             self.dbs[path] = result
         return result
 

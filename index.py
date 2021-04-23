@@ -7,16 +7,16 @@ Implemented as simple on-disk key-value DB that provides very simple functions:
 """
 
 import hashlib
-import dbm
 import pickle
+import keyvalue
 
 _META_PREFIX=b'meta_'
 
 class Index:
-    def __init__(self, filepath, db_impl=dbm.open):
+    def __init__(self, filepath, db_impl=keyvalue.open):
         "Open/create a new index backed by file at filepath"
         self._filepath = filepath
-        self._db = db_impl(self._filepath, 'c', )
+        self._db = db_impl(self._filepath)
 
     def close(self):
         "Close the index. MUST be called after use, but only once"
@@ -33,9 +33,9 @@ class Index:
 
     def list(self):
         "Return a generator which will iterate over all books in the index"
-        for key in self._db.keys():
+        for key, maybe_book in self._db.items():
             if not key.startswith(_META_PREFIX):
-                pickled_book = self._db[key]
+                pickled_book = maybe_book
                 book = pickle.loads(pickled_book)
                 yield book
 

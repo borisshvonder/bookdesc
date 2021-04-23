@@ -34,7 +34,7 @@ import os
 import os.path
 import index
 import logging
-import dbm.ndbm
+import keyvalue
 
 _LOGGER = logging.getLogger("bookdesc.csv_manager")
 
@@ -58,7 +58,7 @@ def _mtime_os(path):
 
 class Manager:
     def __init__(self, path, book2file=_book2file_std, csv_ext=".csv.gz", 
-                       idx_ext=".idx"):
+                       idx_ext=".idx", db_impl=keyvalue.open):
         """@param path The root path at which all files have to be kept
            @param book2file Mapping function, takes in Book, should resolve to
                   filename (without .csv suffix) where Book has to be stored."""
@@ -74,7 +74,7 @@ class Manager:
 
         # dependency-injectable (for testing)
         self._csvopen = gzip.open
-        self._idxopen = dbm.ndbm.open
+        self._idxopen = db_impl
         self._rename = os.rename
         self._mtime = _mtime_os
 

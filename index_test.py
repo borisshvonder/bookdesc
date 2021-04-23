@@ -2,33 +2,11 @@
 # -*- coding: UTF-8 -*-
 
 import book_model
+import keyvalue
 import index
 import unittest
 
-class InMemoryDb:
-    def __init__(self):
-        self.db = {}
-        self.closed = False
-
-    def __setitem__(self, key, value):
-        assert type(key) == type(b'')
-        self.db[key] = value
-
-    def __getitem__(self, key):
-        return self.db.get(key)
-
-    def items(self):
-        return self.db.items()
-
-    def keys(self):
-        return self.db.keys()
-
-    def values(self):
-        return self.db.values()
-
-    def close(self):
-        self.closed = True
-        
+       
 
 class IndexTest(unittest.TestCase):
     def setUp(self):
@@ -36,11 +14,11 @@ class IndexTest(unittest.TestCase):
         self.book1.name = "A book"
         self.book1.file = book_model.File()
         self.book1.file.sha1 = b'01'
-        self.db = InMemoryDb()
+        self.db = keyvalue.open('', backend="memory")
         self.open_fixture()
 
     def open_fixture(self):
-        self.fixture = index.Index("file", db_impl=lambda f,c: self.db)
+        self.fixture = index.Index("file", db_impl=lambda f: self.db)
 
     def tearDown(self):
         self.fixture.__exit__(None, None, None)
@@ -68,11 +46,11 @@ class IndexTest(unittest.TestCase):
         self.book1.name = "A book"
         self.book1.file = book_model.File()
         self.book1.file.sha1 = b'01'
-        self.db = InMemoryDb()
+        self.db = keyvalue.open('', backend="memory")
         self.open_fixture()
 
     def open_fixture(self):
-        self.fixture = index.Index("file", db_impl=lambda f,c: self.db)
+        self.fixture = index.Index("file", db_impl=lambda f: self.db)
 
     def tearDown(self):
         self.fixture.__exit__(None, None, None)

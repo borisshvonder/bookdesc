@@ -27,32 +27,39 @@ _TRANSLATIONS = {}
 _TRANSLATIONS['an output file or folder to put CSVs to'] = {
     'ru': "Выходной CSV файл или каталог куда класть CSV файлы"
 }
+_TRANSLATIONS['DUMB_MODE_FILE_MUST_NOT_EXIST'] = {
+    '': "in dumb mode must not exist and could not be a folder",
+    'ru': " в 'тупом' режиме не должен существовать и не должен быть каталогом"
+}
 _TRANSLATIONS['an input (file or folder) to parse .fb2 from'] = {
     'ru': "Входной файл или каталог где искать .fb2 файлы"
 }
 _TRANSLATIONS['Display program infomration (long)'] = {
     'ru': "Отобразить информацию о программе (длинную)"
 }
+_TRANSLATIONS['dedup backend, (default: b+tree)'] = {
+    'ru': "backend для дедупликации (по умолчанию b+tree)"
+}
 _TRANSLATIONS["BOOKDESC_SHORTDESCRIPTION"] = {
     '': """Parses .fb2 files into CSVs. 
 There are two main modes in which this tool works:
+* The "dumb" mode (turned on using --dumb switch). In this mode the tool simply
+  parses the .fb2 files and dumps them into output CSV. Output MUST be a 
+  filename (not directory) and it should not exist. The deduping is not 
+  performed.
 * The "library" mode (default). In this mode tools parses .fb2 files and 
   incrementally updates CSVs found at the output location, deduping the 
   files by SHA-1
-* The "dumb" mode (turned on using --dumb switch). In this mode the tool simply
-  parses the .fb2 files and dumps them into output CSV (must NOT be a directory,
-  must be a single file). It is possible to turn on deduping in this mode using
-  the --dedup switch
 """,
   'ru': """Парсит .fb2 файлы в CSV файлы. 
 Есть два основных режима работы:
-* Режим "библиотеки" (включен по умолчанию). В этом режиме программа парсит .fb2
-  файлы и инкрементально обновляет CSV файлы в выходном каталоге. Производится
-  дедуплицирование .fb2 файлоы по SHA-1 сумме.
 * "Тупой" режим (включается ключом --dumb). В этом режиме программа просто 
-  парсит указанные ей .fb2 файлы и складывает результаты в CSV (это не может 
-  быть каталогом, это должен быть один CSV файл). Дедуплицирование все-таки
-  может быть включено и в этом режиме при помощи ключа --dedup
+  парсит указанные ей .fb2 файлы и складывает результаты в выходной файл (out).
+  Выходной файл не должен существовать и не должен быть каталогом. Дедупликация
+  не производится.
+* Режим "библиотеки" (включен по умолчанию). В этом режиме программа парсит .fb2
+  файлы и инкрементально обновляет CSV файлы в выходном каталоге (out). 
+  Производится дедуплицирование .fb2 файлоы по SHA-1 сумме.
 """
 }
 

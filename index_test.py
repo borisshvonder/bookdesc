@@ -18,7 +18,7 @@ class IndexTest(unittest.TestCase):
         self.open_fixture()
 
     def open_fixture(self):
-        self.fixture = index.Index("file", db_impl=lambda f: self.db)
+        self.fixture = index.Index("file", idx_backend=lambda f: self.db)
 
     def tearDown(self):
         self.fixture.__exit__(None, None, None)
@@ -50,7 +50,7 @@ class IndexTest(unittest.TestCase):
         self.open_fixture()
 
     def open_fixture(self):
-        self.fixture = index.Index("file", db_impl=lambda f: self.db)
+        self.fixture = index.Index("file", idx_backend=lambda f: self.db)
 
     def tearDown(self):
         self.fixture.__exit__(None, None, None)

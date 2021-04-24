@@ -3,35 +3,26 @@
 
 import logging
 import dbm.dumb # ndbm has serious problems with large number od keys
+import bplustreebranded
+from bplustreebranded import serializer
 
 _BACKENDS = {}
-try:
-    #import sys
-    #import os.path
-    #bplustree_base = os.path.join(os.path.dirname(sys.argv[0]), "bplustree")
-    #sys.path.append(bplustree_base)
-    import bplustreebranded
-    from bplustreebranded import serializer
 
-    class BytesSerializer(serializer.Serializer):
-        def serialize(self, obj : bytes , key_size: int) -> bytes:
-            assert len(obj) <= key_size
-            return obj
+class BytesSerializer(serializer.Serializer):
+    def serialize(self, obj : bytes , key_size: int) -> bytes:
+        assert len(obj) <= key_size
+        return obj
 
-        def deserialize(self, data: bytes) -> bytes:
-            return data
+    def deserialize(self, data: bytes) -> bytes:
+        return data
 
-    def _bplustree(path):
-        return bplustreebranded.BPlusTree(path, 
-            serializer=BytesSerializer(),
-            key_size=20)
+def _bplustree(path):
+    return bplustreebranded.BPlusTree(path, 
+        serializer=BytesSerializer(),
+        key_size=20)
 
 
-    _BACKENDS["bplustree"] = _bplustree
-
-except ImportError:
-    bplustreebranded = None
-
+_BACKENDS["b+tree"] = _bplustree
 
 class InMemoryDb:
     def __init__(self, path):
@@ -94,12 +85,6 @@ def open(path, backend=None):
         if not bak: raise ValueError("Backend " + backend + " is unavaliable")
         return bak(path)
     else:
-        if bplustreebranded: 
-            logging.debug("Opening bplustree at path %s", path)
-            return _bplustree(path)
-        else:
-            logging.info("No bplustree available using dbm.dump implementation\
-                at %s", path)
-            return DumbDb(path)
+        return _bplustree(path)
 
 def backends(): return list(_BACKENDS.keys())

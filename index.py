@@ -13,10 +13,10 @@ import keyvalue
 _META_PREFIX=b'meta_'
 
 class Index:
-    def __init__(self, filepath, db_impl=keyvalue.open):
+    def __init__(self, filepath, idx_backend=keyvalue.open):
         "Open/create a new index backed by file at filepath"
         self._filepath = filepath
-        self._db = db_impl(self._filepath)
+        self._db = idx_backend(self._filepath)
 
     def close(self):
         "Close the index. MUST be called after use, but only once"

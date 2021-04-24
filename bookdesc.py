@@ -37,28 +37,43 @@ h1. Non-goals
 * In fact, no search at all.
 * No import from existing databases and/or CSVs.
 """
-
-import csv_manager
-import sources
-import logging
-import fb2_parser
-import i18n
+import gzip
+import csv
+import keyvalue
 import argparse
 import os.path
 import sys
+
+import logging
+import csv_parser
+import csv_manager
+import sources
+import fb2_parser
+import i18n
 
 _LOGGER = logging.getLogger("bookdesc")
 
 class BookDesc:
     "Frontend class for the entire library"
     
-    def __init__(self, outpath):
-        self._manager = csv_manager.Manager(outpath)
-        _LOGGER.debug("Initialized Manager at %s", outpath)
+    def __init__(self, outpath, dumb, idx_backend=keyvalue.open):
+        self._dumb = dumb
+        if self._dumb:
+            self._output = gzip.open(outpath, "wt")
+            self._writer = csv.writer(self._output, quoting=csv.QUOTE_MINIMAL)
+            self._writer.writerow(csv_parser.CSV_HEADER)
+            _LOGGER.debug("Created CSV at %s", outpath)
+        else:
+            self._manager = csv_manager.Manager(outpath, 
+                idx_backend=idx_backend)
+            _LOGGER.debug("Initialized Manager at %s", outpath)
         self._parse_buffer = bytearray(1024*1024)
 
     def close(self):
-        self._manager.close()
+        if self._dumb:
+            self._output.close()
+        else:
+            self._manager.close()
 
     def __enter__(self): return self
     def __exit__(self, type, value, traceback): self.close()
@@ -104,20 +119,21 @@ class BookDesc:
                 book = None
             if book: 
                 _LOGGER.info("Found book '%s'", book.name)
-                self._manager.put(book)
+                if self._dumb:
+                    row = csv_parser.to_row(book)
+                    self._writer.writerow(row)
+                else:
+                    self._manager.put(book)
             else:
                 _LOGGER.warning("Couldn't parse book %s", fb2_src)
 
     def build_all_csvs(self):
-        _LOGGER.debug("Rebuilding CSVs")
-        self._manager.build_all_csvs()
-        _LOGGER.info("CSVs rebuilt")
+        if not self._dumb:
+            _LOGGER.debug("Rebuilding CSVs")
+            self._manager.build_all_csvs()
+            _LOGGER.info("CSVs rebuilt")
 
-def main():
-    if ("-I" in sys.argv) or ("--info" in sys.argv):
-        print(i18n.translate("BOOKDESC_INFO"))
-        return
-    logging.basicConfig(level=logging.DEBUG)
+def parse_args():
     parser = argparse.ArgumentParser(description=\
         i18n.translate('BOOKDESC_SHORTDESCRIPTION'))
     parser.add_argument('-I', '--info', action = "store_true",
@@ -126,8 +142,33 @@ def main():
         help=i18n.translate('an output file or folder to put CSVs to'))
     parser.add_argument('inputs', metavar='INPUT', type=str, nargs='+',
         help=i18n.translate('an input (file or folder) to parse .fb2 from'))
-    args = parser.parse_args()
-    with BookDesc(args.out[0]) as desc:
+    parser.add_argument('-d', '--dumb', action = "store_true",
+        help=i18n.translate('dumb mode'))
+    parser.add_argument('-b', '--backend', type=str, 
+        choices=keyvalue.backends(), 
+        help=i18n.translate('dedup backend, (default: b+tree)'))
+    return parser.parse_args()
+    
+
+def main():
+    if ("-I" in sys.argv) or ("--info" in sys.argv):
+        print(i18n.translate("BOOKDESC_INFO"))
+        return
+    args = parse_args()
+    if args.dumb and os.path.exists(args.out[0]):
+        print(args.out[0], " ", 
+            i18n.translate("DUMB_MODE_FILE_MUST_NOT_EXIST"), 
+            file = sys.stderr)
+        return
+    logging.basicConfig(level=logging.DEBUG)
+    backend_func = keyvalue.open
+    if args.backend:
+        if args.dumb:
+            _LOGGER.warn("--backend ignored for dumb mode")
+        else:
+            backend_func = \
+                lambda path: keyvalue.open(path, backend=args.backend)
+    with BookDesc(args.out[0], args.dumb, idx_backend=backend_func) as desc:
         desc.parse_inputs(*args.inputs)
         desc.build_all_csvs()
 

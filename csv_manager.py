@@ -58,7 +58,8 @@ def _mtime_os(path):
 
 class Manager:
     def __init__(self, path, book2file=_book2file_std, csv_ext=".csv.gz", 
-                       idx_ext=".idx", db_impl=keyvalue.open):
+                       idx_ext=".idx", idx_backend=keyvalue.open, 
+                       isdir = os.path.isdir):
         """@param path The root path at which all files have to be kept
            @param book2file Mapping function, takes in Book, should resolve to
                   filename (without .csv suffix) where Book has to be stored."""
@@ -71,10 +72,11 @@ class Manager:
         self._book2file = book2file
         self._csv_ext = csv_ext
         self._idx_ext = idx_ext
+        self._single_file = not isdir(path)
 
         # dependency-injectable (for testing)
         self._csvopen = gzip.open
-        self._idxopen = db_impl
+        self._idx_backend = idx_backend
         self._rename = os.rename
         self._mtime = _mtime_os
 
@@ -91,7 +93,7 @@ class Manager:
 
     def put(self, book):
         "Put book to appropriate index"
-        filename = self._book2file(book)
+        filename = self._book2file_safe(book)
         idx = self._indexes.get(filename)
         if not idx:
             idx = self._rebuild(filename)
@@ -116,7 +118,7 @@ class Manager:
 
     def _rebuild(self, filename):
         idx_path = self._idx_path(filename)
-        idx = index.Index(idx_path, db_impl=self._idxopen)
+        idx = index.Index(idx_path, idx_backend=self._idx_backend)
         csv_path = self._csv_path(filename)
 
         current_mtime = self._mtime(csv_path)
@@ -146,8 +148,20 @@ class Manager:
         _LOGGER.info("Rebuilt %s", idx_path)
         return idx
 
+    def _book2file_safe(self, book):
+        if self._single_file:
+            return ''
+        else:
+            return self._book2file(book)
+
     def _csv_path(self, filename):
-        return os.path.join(self._path, filename + self._csv_ext)
+        if self._single_file:
+            return self._path
+        else:
+            return os.path.join(self._path, filename + self._csv_ext)
 
     def _idx_path(self, filename):
-        return os.path.join(self._path, filename + self._idx_ext)
+        if self._single_file:
+            return self._path + self._idx_ext
+        else:
+            return os.path.join(self._path, filename + self._idx_ext)

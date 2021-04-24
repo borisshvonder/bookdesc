@@ -29,13 +29,20 @@ class Book2FileStdTest(unittest.TestCase):
         
         
 class ManagerTest(unittest.TestCase):
+
+    def build_manager(self, at_path):
+        manager = csv_manager.Manager(path=at_path, 
+            idx_backend=self.idxopen,
+            isdir=lambda path: path.endswith('/'))
+        manager._csvopen = self.csvopen
+        manager._rename = self.rename
+        manager._mtime = self.mtime
+        return manager
+        
     def setUp(self):
         self.dbs = {}
         self.virtualfiles = {} # in-memory filesystem
-        self.manager = csv_manager.Manager(path="/", db_impl=self.idxopen)
-        self.manager._csvopen = self.csvopen
-        self.manager._rename = self.rename
-        self.manager._mtime = self.mtime
+        self.manager = self.build_manager("/")
 
         self.book1 = book_model.Book()
         self.book1.name = "book1"
@@ -75,12 +82,12 @@ class ManagerTest(unittest.TestCase):
     def test_put_one_book(self):
         self.manager.put(self.book1)
         self.manager.build_all_csvs()
-        self.assert_single_book1()
+        self.assert_single_book1("/a.csv.gz")
         pickled = pickle.dumps(self.book1)
         self.assertEqual(pickled, self.dbs["/a.idx"][self.book1.file.sha1])
 
-    def assert_single_book1(self):
-        vcsv = self.virtualfiles["/a.csv.gz"]
+    def assert_single_book1(self, path):
+        vcsv = self.virtualfiles[path]
         lines = vcsv.contents.split('\r\n')
         self.assertTrue(len(lines)>=2)
         self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[0])
@@ -88,7 +95,7 @@ class ManagerTest(unittest.TestCase):
 
     def test_read_csv(self):
         self.write_book_to_vfile("/a.csv.gz", self.book1)
-        self.assert_single_book1()
+        self.assert_single_book1("/a.csv.gz")
         self.manager.put(self.book2)
         self.manager.build_all_csvs()
         vcsv = self.virtualfiles["/a.csv.gz"]
@@ -102,10 +109,10 @@ class ManagerTest(unittest.TestCase):
 
     def test_will_not_read_csv_if_modtime_matches(self):
         self.write_book_to_vfile("/a.csv.gz", self.book1)
-        idx = index.Index("/a.idx", db_impl=self.idxopen)
+        idx = index.Index("/a.idx", idx_backend=self.idxopen)
         idx.set("mtime", self.mtime("/a.csv.gz"))
         idx.close()
-        self.assert_single_book1()
+        self.assert_single_book1("/a.csv.gz")
         self.manager.put(self.book2)
         self.manager.build_all_csvs()
         vcsv = self.virtualfiles["/a.csv.gz"]
@@ -115,6 +122,21 @@ class ManagerTest(unittest.TestCase):
         self.assertEqual('', lines[0])
         self.assertEqual('30323032,book2,Second Author,,,,,,', lines[1])
         self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[2])
+
+    def test_single_file_mode(self):
+        self.write_book_to_vfile("/file", self.book1)
+        self.assert_single_book1("/file")
+        self.manager = self.build_manager("/file")
+        self.manager.put(self.book2)
+        self.manager.build_all_csvs()
+        vcsv = self.virtualfiles["/file"]
+        lines = vcsv.contents.split("\r\n")
+        lines.sort()
+        self.assertEqual(4, len(lines))
+        self.assertEqual('', lines[0])
+        self.assertEqual('30313031,book1,First Author,,,,,,', lines[1])
+        self.assertEqual('30323032,book2,Second Author,,,,,,', lines[2])
+        self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[3])
 
     def write_book_to_vfile(self, path, book):
         with self.csvopen(path, "wb") as csv_file:

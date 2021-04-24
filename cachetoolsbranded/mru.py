@@ -1,6 +1,6 @@
 import collections
 
-from cachetools.cache import Cache
+from cachetoolsbranded.cache import Cache
 
 
 class MRUCache(Cache):

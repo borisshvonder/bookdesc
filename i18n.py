@@ -40,6 +40,12 @@ _TRANSLATIONS['Display program infomration (long)'] = {
 _TRANSLATIONS['dedup backend, (default: b+tree)'] = {
     'ru': "backend для дедупликации (по умолчанию b+tree)"
 }
+_TRANSLATIONS['coward mode: fail on any WARNING/ERROR/CRITICAL message'] = {
+    'ru': "режим труса: аварийный выход при любом WARNING/ERROR/CRITICAL сообщении"
+}
+_TRANSLATIONS['logging level (NONE: no logging)'] = {
+    'ru': "уровень логгирования (NONE: без ведения логов)"
+}
 _TRANSLATIONS["BOOKDESC_SHORTDESCRIPTION"] = {
     '': """Parses .fb2 files into CSVs. 
 There are two main modes in which this tool works:

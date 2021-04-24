@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 """Provides access to best k-v store available"""
 
-import logging
+import log
 import dbm.dumb # ndbm has serious problems with large number od keys
 import bplustreebranded
 from bplustreebranded import serializer

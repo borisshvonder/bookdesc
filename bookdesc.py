@@ -44,14 +44,14 @@ import argparse
 import os.path
 import sys
 
-import logging
+import log
 import csv_parser
 import csv_manager
 import sources
 import fb2_parser
 import i18n
 
-_LOGGER = logging.getLogger("bookdesc")
+_LOGGER = log.get("bookdesc")
 
 class BookDesc:
     "Frontend class for the entire library"
@@ -147,6 +147,11 @@ def parse_args():
     parser.add_argument('-b', '--backend', type=str, 
         choices=keyvalue.backends(), 
         help=i18n.translate('dedup backend, (default: b+tree)'))
+    parser.add_argument('-W', '--Werror', action = "store_true", dest="werror",
+        help=i18n.translate('fail on any warning and error message'))
+    parser.add_argument('-l', '--log-level', type=str, default="INFO",
+        choices=["INFO", "WARNING", "ERROR", "CRITICAL"], 
+        help=i18n.translate('logging level'))
     return parser.parse_args()
     
 
@@ -160,7 +165,7 @@ def main():
             i18n.translate("DUMB_MODE_FILE_MUST_NOT_EXIST"), 
             file = sys.stderr)
         return
-    logging.basicConfig(level=logging.DEBUG)
+    log.config(werror=args.werror, log_level=args.log_level)
     backend_func = keyvalue.open
     if args.backend:
         if args.dumb:

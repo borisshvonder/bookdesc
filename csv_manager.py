@@ -33,10 +33,10 @@ import gzip
 import os
 import os.path
 import index
-import logging
+import log
 import keyvalue
 
-_LOGGER = logging.getLogger("bookdesc.csv_manager")
+_LOGGER = log.get("bookdesc.csv_manager")
 
 def _book2file_std(book):
     "Standard implementation of the Book to filename mapping"

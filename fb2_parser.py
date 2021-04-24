@@ -5,11 +5,11 @@ import book_model
 import hashlib
 import codecs
 import re
-import logging
+import log
 import xml.etree.ElementTree as ET
 import io
 
-_LOGGER = logging.getLogger("bookdesc.fb2_parser")
+_LOGGER = log.get("bookdesc.fb2_parser")
 
 _MEGABYTE = 1024*1024
 

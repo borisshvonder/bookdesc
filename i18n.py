@@ -13,6 +13,7 @@ def _major_locale():
 
 
 _MAJOR_LOCALE = _major_locale()
+_TRANSLATIONS = {}
     
 def translate(phrase):
     text = None
@@ -23,7 +24,6 @@ def translate(phrase):
     if not text: text = phrase
     return text
 
-_TRANSLATIONS = {}
 _TRANSLATIONS['an output file or folder to put CSVs to'] = {
     'ru': "Выходной CSV файл или каталог куда класть CSV файлы"
 }

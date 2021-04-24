@@ -5,7 +5,7 @@ import os
 import platform
 from typing import Union, Tuple, Optional
 
-import cachetools
+import cachetoolsbranded as cachetools
 import rwlock
 
 from .node import Node, FreelistNode

@@ -14,17 +14,17 @@ import binascii
 
 def to_row(book):
     "Return a list of column values representing a book"
-    file = book.file if book.file else book_model.File()
-    iso8601 = _iso_8601(file.mod_time)
+    f = book.file if book.file else book_model.File()
+    iso8601 = _iso_8601(f.mod_time)
     authors = book.authors if book.authors else []
     authors = ";".join(book.authors)
-    sha1 = file.sha1 if file.sha1 else b''
-    md5  = file.md5 if file.md5 else b''
+    sha1 = f.sha1 if f.sha1 else b''
+    md5  = f.md5 if f.md5 else b''
     name = book.name if book.name else ""
     isbn = book.isbn if book.isbn else ""
-    path = file.path if file.path else ""
+    path = f.path if f.path else ""
     year = str(book.year) if book.year else ""
-    size = str(file.size) if file.size else ""
+    size = str(f.size) if f.size else ""
     meta = book.metatext if book.metatext else ""
     return (sha1.hex(), md5.hex(), name, authors, year, isbn, path, size, 
         iso8601, meta)

@@ -19,7 +19,8 @@ class BytesSerializer(serializer.Serializer):
 def _bplustree(path):
     return bplustreebranded.BPlusTree(path, 
         serializer=BytesSerializer(),
-        key_size=20)
+        key_size=20,
+        page_size=65536)
 
 
 _BACKENDS["b+tree"] = _bplustree

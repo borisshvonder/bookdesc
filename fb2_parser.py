@@ -47,7 +47,6 @@ continue looking for the <description tag, but unlikely will find it""")
 
 def _find_description(buffer, size, encoding):
     start_tag = "<description".encode(encoding)
-    print(start_tag)
     start = buffer.find(start_tag, 0, size)
     if start < 0: return None
     end_tag = "</description>".encode(encoding)

@@ -215,6 +215,57 @@ class ParseDescriptionTest(unittest.TestCase):
         book = fb2_parser._parse_description(sample)
         self.assertEqual('http://kats/', book.annotation)
 
+
+    def test_malformed(self):
+        sample="""<description>
+  <title-info>
+   <genre>poetry</genre>
+   <genre>love_erotica</genre>
+   <author>
+    <first-name>Peter</first-name>
+    <last-name>Peneter</last-name>
+   </author>
+   <book-title>Sekretaj sonetoj</book-title>
+<annotation><p>La temo de la «Sekretaj sonetoj»estas eterna kiel la vivo mem: la amo. Klasika, senriproĉa formo el 52 sonetoj, 2 rondeloj kaj balado-epilogo (la virtuozan poezian teknikon de la aŭtoro konas ĉiu leganto!) prezentas tute eksterordinaran enhavon — «la ardan amon trans ĉemizo».</p>
+<p>Verdire, se oni traktas Sekretajn Sonetojn sen antaŭjuĝoj — la ciklo estas tute ĉasta kaj altspirita. Ĝi ne liveras pornografiaĵojn, ne reklamas perversojn, sed traktas la veran amon, ĉar «la vera am’ neniam ja perversas» (<a href="#_22">XXII</a>), «tabuo ne ekzistas por la am’» (<a href="#_30">XXX</a>).</p>
+<p>Ĝenerale, por legi la libron oni bezonas ne nur libere posedi esperanton kaj esti ne surda al poezio, sed ankaŭ — havi krom ĉio cetera bonan senton de humuro. Preskaŭ ĉie en la versoj de Kalocsay ĉeestas milda ironio, kaj tio donas al atentema leganto apartan plezuron.</p>
+<p>La «Komplezaj klarigoj» estas duonŝerca glosaro de kelkaj raraj vortoj kaj neologismoj, inter kiuj enkondukitaj de la aŭtoro (ekzemple pugo). Tradicia parto de multaj esperantaj libroj, la glosaro, ĉi tie estas senriproĉe versita per kvinjamboj (kvankam senrime), kaj havas apartan artan valoron. Laŭ la diro de la aŭtoro,</p>
+<poem><stanza>
+<v>ĝi vin ne sole distras, sed instruas</v>
+<v>vin ankaŭ uzi pli vortriĉan stilon:</v>
+<v>kunligos vi plezuron kaj utilon.</v></stanza>
+<text-author>(Laŭ recenzo de V. Melnikov en LOdE №10/11)</text-author></poem>
+
+</annotation>
+   <date>1932</date>
+   <coverpage><image href="#cover.png"/></coverpage>
+<//www.esperanto-buecher.de/Peneter-Sekretaj-sonetoj
+HEA 1989, ISBN 9635713142 -->
+  <lang>eo</lang>
+  </title-info>
+  <document-info>
+   <author>
+    <nickname>NN</nickname>
+   </author>
+   <date value="2018-11-01">2018</date>
+   <src-url>https://www.esperanto.mv.ru/Kolekto/Sekretaj_sonetoj.html</src-url>
+   <src-url>https://eo.wikisource.org/wiki/Sekretaj_Sonetoj</src-url>
+   <id>2018-11-01PP</id>
+   <version>1.0</version>
+   <history>
+    <p>ver. 1.0: Kreo de fb2-libro</p>
+   </history>
+  </document-info>
+</description>"""
+        book = fb2_parser._parse_description(sample)
+        self.assertEqual("Sekretaj sonetoj", book.title)
+        self.assertEqual(["Peter Peneter", "NN"], book.authors)
+        self.assertTrue(len(book.annotation) > 10)
+        self.assertEqual(1932, book.year)
+        self.assertTrue(len(book.metatext) > 100)
+
+
+
 if __name__ == '__main__':
     unittest.main()
 

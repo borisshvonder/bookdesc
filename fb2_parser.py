@@ -98,6 +98,17 @@ def _determine_encoding(buffer, size):
        return "UTF-8"
 
 def _parse_description(xml):
+    book = _parse_description_via_xml(xml)
+    if not book:
+        _LOGGER.info("Attempting regexp-based parsing")
+        book = _parse_description_via_regexpes(xml)
+    return book
+
+_COMPACT_WHITESPACES = re.compile(r"\s+")
+def _compact_whitespaces(text):
+    return _COMPACT_WHITESPACES.sub(' ', text.strip())
+
+def _parse_description_via_xml(xml):
     """Interesting parts of FB2 to look at (root is <description>):
     publish-info/book-name <- original book name
     publish-info/year <- year of publication
@@ -114,9 +125,9 @@ def _parse_description(xml):
     desc = None
     try:
         desc = ET.fromstring(xml)
-    except:
+    except ET.ParseError as ex:
         _LOGGER.debug(xml)
-        _LOGGER.exception("Can't parse xml")
+        _LOGGER.info("Can't parse xml: %s", ex)
         return None
     publish_info = desc.find("publish-info")
     book.name = _first_text(publish_info, "book-name")
@@ -134,13 +145,13 @@ def _parse_description(xml):
     if not book.authors:
         document_info = desc.find("document-info")
         book.authors = _parse_authors(document_info)
-    book.metatext = _dump_text(desc)
+    book.metatext = _compact_whitespaces(_dump_text(desc))
 
     return book
 
-_LOOKS_LIKE_TAG=re.compile("<[^>]*?>", re.MULTILINE)
 _COLON=re.compile("[:]")
 
+_LOOKS_LIKE_TAG=re.compile("<[^>]*?>", re.MULTILINE)
 def _remove_namespaces(xml):
     """Since we are parsing just the <description> part of the FB2, the 
     namespaces will not be resolved. Therefore, we have to either:
@@ -172,7 +183,7 @@ def _replace_namespaces_in_tag(s):
     colon = s.find(':', pos)
     while colon>=0:
         token_start = colon
-        while token_start > 0 and s[token_start-1] not in " </'\"\r\n\f\t":
+        while token_start > 0 and s[token_start-1] not in " </'\"\r\n\f\t\v":
             token_start -= 1
         result.write(s[pos:token_start])
         pos = colon + 1
@@ -226,8 +237,9 @@ def _first_int(root, *tags):
             if text:
                 try:
                     return int(text)
-                except:
-                    _LOGGER.info("Can't parse book year:'%s'", text)
+                except ValueError as ex:
+                    _LOGGER.info("Can't parse book year:'%s' due to %s", 
+                        text, ex)
     return None
 
 def _dump_text(root):
@@ -248,6 +260,72 @@ def _dump_text(root):
             _dump(child)
     _dump(root)
     return acc.getvalue()
+
+def _make_tag_regexp(tag): 
+    return re.compile("<"+tag+"[ >](.*?)</"+tag+">", re.DOTALL)
+_BOOK_NAME_RE =_make_tag_regexp("book-name")
+_BOOK_TITLE_RE = _make_tag_regexp("book-title")
+_BOOK_YEAR_RE = _make_tag_regexp("year")
+_ISBN_YEAR_RE = _make_tag_regexp("isbn")
+_AUTHORS_RE = _make_tag_regexp("author")
+_DATE_RE = _make_tag_regexp("date")
+_ANNOTATION_RE = _make_tag_regexp("annotation")
+
+def _parse_description_via_regexpes(xml):
+    book = book_model.Book()
+    book.title = _find_first_tag_text(xml, _BOOK_NAME_RE)
+    book.authors = _find_all_tag_texts(xml, _AUTHORS_RE)
+    if not book.title: book.title = _find_first_tag_text(xml, _BOOK_TITLE_RE)
+    book.year = _find_first_tag_int(xml, _BOOK_YEAR_RE)
+    if not book.year: book.year =_find_first_tag_int(xml, _DATE_RE)
+    book.annotation = _find_first_tag_text(xml, _ANNOTATION_RE)
+    book.metatext = _remove_all_tags(xml)
+    return book
+
+def _find_all_tag_texts(xml, regexp):
+    result = []
+    pos = 0
+    match = regexp.search(xml, pos)
+    while match:
+        text = _remove_all_tags(match.group())
+        if text: result.append(text)
+        pos = match.end()
+        match = regexp.search(xml, pos)
+    return result
+
+
+def _find_first_tag_int(xml, regexp):
+    pos = 0
+    match = regexp.search(xml, pos)
+    while match:
+        text = _remove_all_tags(match.group())
+        if text: 
+            try:
+                return int(text)
+            except ValueError: pass
+        pos = match.end()
+        match = regexp.search(xml, pos)
+
+def _find_first_tag_text(xml, regexp):
+    pos = 0
+    match = regexp.search(xml, pos)
+    while match:
+        text = _remove_all_tags(match.group())
+        if text: return text
+        pos = match.end()
+        match = regexp.search(xml, pos)
+
+def _remove_all_tags(text):
+    result = io.StringIO()
+    pos = 0
+    match = _LOOKS_LIKE_TAG.search(text, pos)
+    while match:
+        result.write(text[pos:match.start()])
+        pos = match.end()
+        match = _LOOKS_LIKE_TAG.search(text, pos)
+    end = len(text)
+    result.write(text[pos:])
+    return _compact_whitespaces(result.getvalue())
 
 def _strip(text):
     if text:
@@ -280,4 +358,3 @@ class _ChecksumStream:
     def digest(self, name):
         "Return current digest value for digest"
         return self._digests[name].digest()
-

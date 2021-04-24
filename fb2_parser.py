@@ -47,6 +47,7 @@ continue looking for the <description tag, but unlikely will find it""")
 
 def _find_description(buffer, size, encoding):
     start_tag = "<description".encode(encoding)
+    print(start_tag)
     start = buffer.find(start_tag, 0, size)
     if start < 0: return None
     end_tag = "</description>".encode(encoding)
@@ -66,7 +67,7 @@ def _determine_encoding(buffer, size):
     ret = None
     if size >= 4:
         if buffer.startswith(codecs.BOM_UTF8):
-            ret = 'utf-8-sig'
+            ret = 'UTF-8'
         elif buffer.startswith(codecs.BOM_UTF16_LE):
             ret = 'UTF-16-LE'
         elif buffer.startswith(codecs.BOM_UTF16_BE):

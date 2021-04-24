@@ -150,7 +150,7 @@ def parse_args():
     parser.add_argument('-W', '--Werror', action = "store_true", dest="werror",
         help=i18n.translate('fail on any warning and error message'))
     parser.add_argument('-l', '--log-level', type=str, default="INFO",
-        choices=["INFO", "WARNING", "ERROR", "CRITICAL"], 
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], 
         help=i18n.translate('logging level'))
     return parser.parse_args()
     

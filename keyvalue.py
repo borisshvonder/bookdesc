@@ -20,7 +20,7 @@ def _bplustree(path):
     return bplustreebranded.BPlusTree(path, 
         serializer=BytesSerializer(),
         key_size=20,
-        page_size=8192)
+        page_size=4096*4)
 
 
 _BACKENDS["b+tree"] = _bplustree

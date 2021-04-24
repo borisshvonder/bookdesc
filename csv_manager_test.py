@@ -26,6 +26,14 @@ class Book2FileStdTest(unittest.TestCase):
         self.assertEqual("noauthor", csv_manager._book2file_std(self.book1))
         self.book1.authors = ["", "Second Author"]
         self.assertEqual("a", csv_manager._book2file_std(self.book1))
+
+    def test_russian_letters(self):
+         self.book1.authors = ["Некто в Чорном"]
+         self.assertEqual("ч", csv_manager._book2file_std(self.book1))
+
+    def test_unusuzl_letter(self):
+         self.book1.authors = ["&*^ *&^*&^&*"]
+         self.assertEqual("0", csv_manager._book2file_std(self.book1))
         
         
 class ManagerTest(unittest.TestCase):

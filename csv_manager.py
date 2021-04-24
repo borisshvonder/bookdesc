@@ -35,8 +35,11 @@ import os.path
 import index
 import log
 import keyvalue
+import re
 
 _LOGGER = log.get("bookdesc.csv_manager")
+
+_NORMAL_LETTER=re.compile("[a-zа-я]")
 
 def _book2file_std(book):
     "Standard implementation of the Book to filename mapping"
@@ -45,7 +48,12 @@ def _book2file_std(book):
         for author in book.authors:
             names = author.split(' ')
             last_name = names[-1]
-            if len(last_name)>0: return last_name[0].lower()
+            if len(last_name)>0: 
+                letter = last_name[0].lower()
+                if _NORMAL_LETTER.fullmatch(letter):
+                    return letter
+                else:
+                    return "0"
     return "noauthor"
 
 def _mtime_os(path):

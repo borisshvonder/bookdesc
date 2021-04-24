@@ -6,7 +6,7 @@ import platform
 from typing import Union, Tuple, Optional
 
 import cachetoolsbranded as cachetools
-import rwlock
+import rwlockbranded as rwlock
 
 from .node import Node, FreelistNode
 from .const import (

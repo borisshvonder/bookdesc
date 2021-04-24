@@ -145,10 +145,12 @@ def parse_args():
     parser.add_argument('-d', '--dumb', action = "store_true",
         help=i18n.translate('dumb mode'))
     parser.add_argument('-b', '--backend', type=str, 
-        choices=keyvalue.backends(), 
-        help=i18n.translate('dedup backend, (default: b+tree)'))
+        choices = keyvalue.backends(), 
+        default = keyvalue.DEFAULT_BACKEND,
+        help=i18n.translate('dedup backend (default:') + ' ' + \
+            keyvalue.DEFAULT_BACKEND + ")")
     parser.add_argument('-W', '--Werror', action = "store_true", dest="werror",
-        help=i18n.translate('fail on any warning and error message'))
+        help=i18n.translate('COWARD_MODE'))
     parser.add_argument('-l', '--log-level', type=str, default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], 
         help=i18n.translate('logging level'))
@@ -166,13 +168,9 @@ def main():
             file = sys.stderr)
         return
     log.config(werror=args.werror, log_level=args.log_level)
-    backend_func = keyvalue.open
-    if args.backend:
-        if args.dumb:
-            _LOGGER.warn("--backend ignored for dumb mode")
-        else:
-            backend_func = \
-                lambda path: keyvalue.open(path, backend=args.backend)
+    backend_func = lambda path: keyvalue.open(path, backend=args.backend)
+    if args.backend and args.dumb:
+        _LOGGER.warn("--backend ignored for dumb mode")
     with BookDesc(args.out[0], args.dumb, idx_backend=backend_func) as desc:
         desc.parse_inputs(*args.inputs)
         desc.build_all_csvs()

@@ -37,10 +37,11 @@ _TRANSLATIONS['an input (file or folder) to parse .fb2 from'] = {
 _TRANSLATIONS['Display program infomration (long)'] = {
     'ru': "Отобразить информацию о программе (длинную)"
 }
-_TRANSLATIONS['dedup backend, (default: b+tree)'] = {
-    'ru': "backend для дедупликации (по умолчанию b+tree)"
+_TRANSLATIONS['dedup backend (default:'] = {
+    'ru': "backend для дедупликации (по умолчанию:"
 }
-_TRANSLATIONS['coward mode: fail on any WARNING/ERROR/CRITICAL message'] = {
+_TRANSLATIONS['COWARD_MODE'] = {
+    '': 'coward mode: fail on any WARNING/ERROR/CRITICAL message',
     'ru': "режим труса: аварийный выход при любом WARNING/ERROR/CRITICAL сообщении"
 }
 _TRANSLATIONS['logging level (NONE: no logging)'] = {

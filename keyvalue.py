@@ -22,7 +22,6 @@ def _bplustree(path):
         key_size=20,
         page_size=4096*4)
 
-
 _BACKENDS["b+tree"] = _bplustree
 
 class InMemoryDb:
@@ -80,12 +79,11 @@ class DumbDb:
 _BACKENDS["memory"]=InMemoryDb
 _BACKENDS["dumb"]=DumbDb
 
-def open(path, backend=None):
-    if backend:
-        bak = _BACKENDS.get(backend)
-        if not bak: raise ValueError("Backend " + backend + " is unavaliable")
-        return bak(path)
-    else:
-        return _bplustree(path)
+DEFAULT_BACKEND="dumb"
+
+def open(path, backend=DEFAULT_BACKEND):
+    bak = _BACKENDS.get(backend)
+    if not bak: raise ValueError("Backend " + backend + " is unavaliable")
+    return bak(path)
 
 def backends(): return list(_BACKENDS.keys())

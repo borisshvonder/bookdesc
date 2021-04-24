@@ -173,6 +173,20 @@ class ParseDescriptionTest(unittest.TestCase):
         book = fb2_parser._parse_description(sample)
         self.assertEqual([], book.authors)
 
+    def test_will_not_pick_up_known_bad_names(self):
+        sample="""
+        <description>
+        <document-info>
+            <author>
+                <first-name>author</first-name>
+                <middle-name></middle-name>
+                <last-name>unknown</last-name>
+            </author>
+        </document-info>
+        </description>"""
+        book = fb2_parser._parse_description(sample)
+        self.assertEqual([], book.authors)
+
     def test_annotation(self):
         sample="""
         <description>

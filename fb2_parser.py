@@ -187,7 +187,21 @@ def _parse_authors(parent):
                a.find("middle-name"),
                a.find("last-name")) for a in author_nodes]
     joined = [_join(ns) for ns in names]
-    return [a for a in joined if a]
+    return [a for a in joined if a and not a in _BAN_AUTHORS]
+
+_BAN_AUTHORS=(
+    "author unknown",
+    "автор неизвестен",
+    "анонимный автор",
+    "неизвестен автор",
+    "неустановленный автор",
+    "без автора",
+    "retroshare retroshare",    # he has mass-generated fb2 books
+    "vitmaier",                 # some fb2 books producer
+    "andrey ch",                # another book builder
+    "consul",                   # another retroshare "entusiast"
+    "ddd hhh",                  # someone was veeeery lazy while building fb2
+)
 
 def _join(xml_elements):
     texts = [e.text for e in xml_elements if e is not None]

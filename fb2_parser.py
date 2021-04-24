@@ -21,7 +21,7 @@ def parse(binary_stream, buffer=None):
     if len(buffer) < _MEGABYTE: 
         raise ValueError("parse_fb2 requires at least 1Mb buffer, you gave "+\
             str(len(buffer))+" bytes")
-    checksummer = _ChecksumStream(binary_stream, buffer, "sha1")
+    checksummer = _ChecksumStream(binary_stream, buffer, "sha1", "md5")
     size = checksummer.read()
     if not size: return None
     encoding = _determine_encoding(buffer, size)
@@ -43,6 +43,7 @@ continue looking for the <description tag, but unlikely will find it""")
     if book:
         book.file = book_model.File()
         book.file.sha1 = checksummer.digest("sha1")
+        book.file.md5 = checksummer.digest("md5")
     return book
 
 def _find_description(buffer, size, encoding):

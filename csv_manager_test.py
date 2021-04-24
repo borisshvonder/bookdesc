@@ -57,11 +57,13 @@ class ManagerTest(unittest.TestCase):
         self.book1.authors = ["First Author"]
         self.book1.file = book_model.File()
         self.book1.file.sha1 = b'0101'
+        self.book1.file.md5 = b'0102'
         self.book2 = book_model.Book()
         self.book2.name = "book2"
         self.book2.authors = ["Second Author"]
         self.book2.file = book_model.File()
         self.book2.file.sha1 = b'0202'
+        self.book2.file.md5 = b'0203'
 
     def tearDown(self):
         self.manager.close()
@@ -99,7 +101,7 @@ class ManagerTest(unittest.TestCase):
         lines = vcsv.contents.split('\r\n')
         self.assertTrue(len(lines)>=2)
         self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[0])
-        self.assertEqual('30313031,book1,First Author,,,,,,', lines[1])
+        self.assertEqual('30313031,30313032,book1,First Author,,,,,,', lines[1])
 
     def test_read_csv(self):
         self.write_book_to_vfile("/a.csv.gz", self.book1)
@@ -111,8 +113,9 @@ class ManagerTest(unittest.TestCase):
         lines.sort()
         self.assertEqual(4, len(lines))
         self.assertEqual('', lines[0])
-        self.assertEqual('30313031,book1,First Author,,,,,,', lines[1])
-        self.assertEqual('30323032,book2,Second Author,,,,,,', lines[2])
+        self.assertEqual('30313031,30313032,book1,First Author,,,,,,', lines[1])
+        self.assertEqual('30323032,30323033,book2,Second Author,,,,,,',
+            lines[2])
         self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[3])
 
     def test_will_not_read_csv_if_modtime_matches(self):
@@ -128,7 +131,8 @@ class ManagerTest(unittest.TestCase):
         lines.sort()
         self.assertEqual(3, len(lines))
         self.assertEqual('', lines[0])
-        self.assertEqual('30323032,book2,Second Author,,,,,,', lines[1])
+        self.assertEqual('30323032,30323033,book2,Second Author,,,,,,',
+            lines[1])
         self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[2])
 
     def test_single_file_mode(self):
@@ -142,8 +146,9 @@ class ManagerTest(unittest.TestCase):
         lines.sort()
         self.assertEqual(4, len(lines))
         self.assertEqual('', lines[0])
-        self.assertEqual('30313031,book1,First Author,,,,,,', lines[1])
-        self.assertEqual('30323032,book2,Second Author,,,,,,', lines[2])
+        self.assertEqual('30313031,30313032,book1,First Author,,,,,,', lines[1])
+        self.assertEqual('30323032,30323033,book2,Second Author,,,,,,',
+            lines[2])
         self.assertEqual(','.join(csv_parser.CSV_HEADER), lines[3])
 
     def write_book_to_vfile(self, path, book):

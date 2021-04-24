@@ -20,6 +20,8 @@ class ParseFB2Test(unittest.TestCase):
         self.assertTrue(len(book.metatext) > 100)
         self.assertEqual("eb0e0ec44a4f6f7bd6d837b5786ac4ec5d2b3cb9",
             book.file.sha1.hex())
+        self.assertEqual("42a7319a2fb45842de56cc7336f63fca",
+            book.file.md5.hex())
             
 
 class ParseDescriptionTest(unittest.TestCase):

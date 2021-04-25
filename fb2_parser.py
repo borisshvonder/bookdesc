@@ -101,6 +101,7 @@ def _determine_encoding(buffer, size):
        return "UTF-8"
 
 def _parse_description(xml, full_desc):
+    book = None
     if full_desc:
         book = _parse_description_via_xml(xml)
     if not book:

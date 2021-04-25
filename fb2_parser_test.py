@@ -52,7 +52,7 @@ class ParseDescriptionTest(unittest.TestCase):
         </document-info>
         </description>
         """
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual("Тестовый платный документ FictionBook 2.1",
             book.name)
         self.assertEqual(2004, book.year)
@@ -70,7 +70,7 @@ class ParseDescriptionTest(unittest.TestCase):
             <book-name>book-name</book-name>
         </publish-info>
         </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual("book-name", book.name)
 
     def test_will_use_book_title_if_no_book_name(self):
@@ -80,7 +80,7 @@ class ParseDescriptionTest(unittest.TestCase):
             <book-title>book-title</book-title>
         </title-info>
         </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual("book-title", book.name)
 
     def test_prefers_year_over_date(self):
@@ -93,7 +93,7 @@ class ParseDescriptionTest(unittest.TestCase):
             <year>2010</year>
         </publish-info>
         </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual(2010, book.year)
 
     def test_year(self):
@@ -103,7 +103,7 @@ class ParseDescriptionTest(unittest.TestCase):
             <year>2010</year>
         </publish-info>
         </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual(2010, book.year)
 
     def test_will_use_date_if_no_year(self):
@@ -113,7 +113,7 @@ class ParseDescriptionTest(unittest.TestCase):
             <date>2020</date>
         </title-info>
         </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual(2020, book.year)
 
     def test_isbn(self):
@@ -123,7 +123,7 @@ class ParseDescriptionTest(unittest.TestCase):
             <isbn>123-456</isbn>
         </publish-info>
         </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual("123-456", book.isbn)
 
     def test_will_prefer_title_authors_over_document_info(self):
@@ -144,7 +144,7 @@ class ParseDescriptionTest(unittest.TestCase):
             </author>
         </document-info>
         </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual(["title-first title-middle title-last"], book.authors)
 
     def test_will_use_authors_from_document_info(self):
@@ -158,7 +158,7 @@ class ParseDescriptionTest(unittest.TestCase):
             </author>
         </document-info>
         </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual(["document-first document-middle document-last"], 
             book.authors)
 
@@ -174,7 +174,7 @@ class ParseDescriptionTest(unittest.TestCase):
             </author>
         </document-info>
         </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual([], book.authors)
 
     def test_will_not_pick_up_known_bad_names(self):
@@ -188,7 +188,7 @@ class ParseDescriptionTest(unittest.TestCase):
             </author>
         </document-info>
         </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual([], book.authors)
 
     def test_annotation(self):
@@ -198,7 +198,7 @@ class ParseDescriptionTest(unittest.TestCase):
             <annotation>annotation</annotation>
         </title-info>
         </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual("annotation", book.annotation)
 
     def test_will_survive_stupid_namespaces(self):
@@ -206,7 +206,7 @@ class ParseDescriptionTest(unittest.TestCase):
         <description>
             <ns1:tag>tag</ns1:tag>
         </description>"""
-        fb2_parser._parse_description(sample)
+        fb2_parser._parse_description(sample, True)
 
     def test_will_correctly_trim_ns_from_attr(self):
         sample="""<description>
@@ -214,7 +214,7 @@ class ParseDescriptionTest(unittest.TestCase):
             <annotation><p><a l:href="http://kats/">http://kats/</a></p></annotation>
         </title-info>
         </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual('http://kats/', book.annotation)
 
 
@@ -259,7 +259,7 @@ HEA 1989, ISBN 9635713142 -->
    </history>
   </document-info>
 </description>"""
-        book = fb2_parser._parse_description(sample)
+        book = fb2_parser._parse_description(sample, True)
         self.assertEqual("Sekretaj sonetoj", book.title)
         self.assertEqual(["Peter Peneter", "NN"], book.authors)
         self.assertTrue(len(book.annotation) > 10)
@@ -278,7 +278,7 @@ HEA 1989, ISBN 9635713142 -->
             s.write('m')
         s.write("</title-info>\n")
         s.write("</description>\n")
-        book = fb2_parser._parse_description(s.getvalue())
+        book = fb2_parser._parse_description(s.getvalue(), True)
         self.assertTrue(len(book.annotation) <= fb2_parser._MAX_ANNOTATION_LEN)
         self.assertTrue(len(book.metatext) <= fb2_parser._MAX_METATEXT_LEN)
 
@@ -292,7 +292,7 @@ HEA 1989, ISBN 9635713142 -->
         s.write("</annotation>\n")
         for i in range(0, fb2_parser._MAX_METATEXT_LEN*2):
             s.write('m')
-        book = fb2_parser._parse_description(s.getvalue())
+        book = fb2_parser._parse_description(s.getvalue(), True)
         self.assertTrue(len(book.annotation) <= fb2_parser._MAX_ANNOTATION_LEN)
         self.assertTrue(len(book.metatext) <= fb2_parser._MAX_METATEXT_LEN)
 if __name__ == '__main__':

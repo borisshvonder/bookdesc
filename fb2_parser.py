@@ -27,20 +27,21 @@ def parse(binary_stream, buffer=None):
     size = checksummer.read()
     if not size: return None
     encoding = _determine_encoding(buffer, size)
-    description_bytes = _find_description(buffer, size, encoding)
+    description_bytes, full_desc = _find_description(buffer, size, encoding)
     if description_bytes:
         xml = codecs.decode(description_bytes, encoding, errors="ignore")
-        book = _parse_description(xml)
+        book = _parse_description(xml, full_desc)
     else:
         _LOGGER.info("""Haven't found <description in the first chunk. Will 
 continue looking for the <description tag, but unlikely will find it""")
     while size:
         if not book:
-            description_bytes = _find_description(buffer, size, encoding)
+            description_bytes, full_desc = _find_description(buffer, size, 
+                encoding)
             if description_bytes:
                 _LOGGER.info("Finally, found <description")
                 xml = codecs.decode(description_bytes, encoding, errors="ignore")
-                book = _parse_description(xml)
+                book = _parse_description(xml, full_desc)
         size = checksummer.read()
     if book:
         book.file = book_model.File()
@@ -55,12 +56,12 @@ def _find_description(buffer, size, encoding):
     end_tag = "</description>".encode(encoding)
     end = buffer.find(end_tag, start+1, size)
     if end <0:
-        _LOGGER.warning("Could not find </description> tag, assuming entire " + 
+        _LOGGER.info("Could not find </description> tag, assuming entire " + 
                         "buffer is the description")
-        end = len(view)
+        return memoryview(buffer)[start:size], False
     else:
         end += len(end_tag)
-    return memoryview(buffer)[start:end]
+    return memoryview(buffer)[start:end], True
 
 _EXTRACT_ENCODING1=re.compile('encoding="(.*?)"')
 _EXTRACT_ENCODING2=re.compile("encoding='(.*?)'")
@@ -99,11 +100,16 @@ def _determine_encoding(buffer, size):
        _LOGGER.info("Could not determine the encoding, assuming UTF-8")
        return "UTF-8"
 
-def _parse_description(xml):
-    book = _parse_description_via_xml(xml)
+def _parse_description(xml, full_desc):
+    if full_desc:
+        book = _parse_description_via_xml(xml)
     if not book:
         _LOGGER.info("Attempting regexp-based parsing")
         book = _parse_description_via_regexpes(xml)
+        if not full_desc:
+            if not book.title: 
+                _LOGGER.debug(xml)
+                _LOGGER.warn("Haven't found title in garbled xml")
     return book
 
 _COMPACT_WHITESPACES = re.compile(r"\s+")

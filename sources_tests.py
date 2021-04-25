@@ -65,23 +65,8 @@ class DirectorySourcesTest(unittest.TestCase):
         return path[-1] == "/"
 
 class ZipTest(unittest.TestCase):
-    def setUp(self):
-        self.mock = MockZip()
-        self.fixture = sources.ZipFileListing("some.zip", self.mock)
-
-    def test_empty(self):
-        self.assertEqual([], list(self.fixture.sources()))
 
     def test_regular_file(self):
-        self.mock.add_file ('file.txt', b'Hello, world')
-        srcs = list(self.fixture.sources())
-        self.assertEqual(1, len(srcs))
-        src = srcs[0]
-        self.assertTrue(isinstance(src, sources.ZipFileSource))
-        self.assertEqual("some.zip!/file.txt", src.path())
-        self.assertEqual(b'Hello, world', src.open("r").read())
-
-    def test_embedded_file(self):
         inmem = io.BytesIO()
         with zipfile.ZipFile(inmem, "w") as file1:
             with file1.open("file2.txt", "w") as stream2:
@@ -96,26 +81,6 @@ class ZipTest(unittest.TestCase):
                 self.assertTrue(isinstance(file2, sources.ZipFileSource))
                 self.assertEqual("file1.zip!/file2.txt", file2.path())
                 self.assertEqual(b'some text', file2.open("r").read())
-
-class MockZip:
-    def __init__(self):
-        self.contents = {}
-
-    def add (self, name, source):
-        self.contents[name] = source
-
-    def add_file(self, name, contents : bytes):
-        fs = sources.FileSource('name')
-        fs._open = lambda path, mode: io.BytesIO(contents)
-        self.add(name, fs)
-
-    def namelist(self):
-        return self.contents.keys()
-
-    def open(self, name, mode):
-        return self.contents[name].open(mode)
-
-       
 
 if __name__ == '__main__':
     unittest.main()

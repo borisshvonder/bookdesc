@@ -137,6 +137,7 @@ class Manager:
         if index_mtime_matches_current: 
             _LOGGER.debug("mtime matches between %s and %s", 
                 idx_path, csv_path)
+            idx.set("mtime", 0)
             return idx
 
         _LOGGER.debug("Rebuilding %s", idx_path)
@@ -152,7 +153,7 @@ class Manager:
                     book = parser.parse_row(row)
                     idx.save(book)
         current_mtime = self._mtime(csv_path)
-        idx.set("mtime", current_mtime)
+        idx.set("mtime", 0)
         _LOGGER.info("Rebuilt %s", idx_path)
         return idx
 

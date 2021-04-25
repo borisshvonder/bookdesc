@@ -5,16 +5,34 @@ reading files from .zip and .gz archives
 
 import os
 import os.path
+import zipfile
 
 def source_at(path, recursive=True):
     """Return either a Source (if path is pointing to a file) or 
        Sources (if path is pointing to a directory or .zip. Or None if
        path does not point to file or directory"""
     if os.path.isfile(path):
+        if recursive and _looks_like_zip(path):
+            stream = open(path, "rb")
+            unpacked = _attempt_open_zip(stream)
+            if unpacked:
+                return ZipFileListing(path, unpacked)
         return FileSource(path)
     elif os.path.isdir(path):
         return DirectorySources(path, recursive)
 
+def _looks_like_zip(path):
+    _, ext = os.path.splitext(path)
+    return ext.strip().lower() == ".zip"
+
+def _attempt_open_zip(stream):
+    """Attempts opening a stream using zip. If attempt fails, the stream
+       will be closed"""
+    try:
+        return zipfile.ZipFile(stream)
+    except zipfile.BadZipFile as ex:
+        stream.close()
+        return None
 
 class Sources:
     "An interface which describes the list of sources"
@@ -60,6 +78,7 @@ class DirectorySources(Sources):
         self._listdir = os.listdir
         self._isfile = os.path.isfile
         self._isdir = os.path.isdir
+        self._source_at = source_at
 
     def path(self): return self._path
 
@@ -69,7 +88,7 @@ class DirectorySources(Sources):
         for name in self._listdir(path):
             fullname = os.path.join(path, name)
             if self._isfile(fullname):
-                yield source_at(fullname)
+                yield self._source_at(fullname, self._recursive)
             elif self._recursive and self._isdir(fullname):
                 yield DirectorySources(fullname, True)
 
@@ -81,3 +100,38 @@ class FileSource(Source):
     def path(self): return self._path
 
     def open(self, mode): return self._open(self._path, mode)
+
+
+class ZipFileListing(Sources):
+    """Represents contents of the .zip file"""
+
+    def __init__(self, path, zip_file):
+        self._path = path
+        self._zip = zip_file
+
+    def close(self): self._zip.close()
+
+    def path(self): return self._path
+
+    def sources(self):
+        for name in self._zip.namelist():
+            fullname = _zip_join(self._path, name)
+            yield ZipFileSource(fullname, self._zip, name)
+
+def _zip_join(zipname, name): return zipname + "!/" + name
+
+class ZipFileSource(Source):
+    """Represents single file inside .zip"""
+
+    def __init__(self, path, zip_file, name):
+        self._path = path
+        self._zip = zip_file
+        self._name = name
+
+    def path(self): return self._path
+
+    def open(self, mode):
+        if "w" in mode:
+            raise ValueError("So far, .zip are treated readonly")
+        return self._zip.open(self._name, "r")
+        

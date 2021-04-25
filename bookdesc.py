@@ -37,6 +37,9 @@ h1. Non-goals
 * In fact, no search at all.
 * No import from existing databases and/or CSVs.
 """
+
+VERSION=1.0
+
 import gzip
 import csv
 import keyvalue
@@ -154,10 +157,15 @@ def parse_args():
     parser.add_argument('-l', '--log-level', type=str, default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], 
         help=i18n.translate('logging level'))
+    parser.add_argument('-V', '--version', action = "store_true",
+        help=i18n.translate('display version and exit'))
     return parser.parse_args()
     
 
 def main():
+    if ("-V" in sys.argv or "--version" in sys.argv):
+        print("v" + str(VERSION))
+        return
     if ("-I" in sys.argv) or ("--info" in sys.argv):
         print(i18n.translate("BOOKDESC_INFO"))
         return

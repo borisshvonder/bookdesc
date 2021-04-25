@@ -47,6 +47,9 @@ _TRANSLATIONS['COWARD_MODE'] = {
 _TRANSLATIONS['logging level (NONE: no logging)'] = {
     'ru': "уровень логгирования (NONE: без ведения логов)"
 }
+_TRANSLATIONS['display version and exit'] = {
+    'ru': "напечатать версию и выйти"
+}
 _TRANSLATIONS["BOOKDESC_SHORTDESCRIPTION"] = {
     '': """Parses .fb2 files into CSVs. 
 There are two main modes in which this tool works:

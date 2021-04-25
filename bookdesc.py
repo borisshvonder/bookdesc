@@ -178,7 +178,7 @@ def main():
     log.config(werror=args.werror, log_level=args.log_level)
     backend_func = lambda path: keyvalue.open(path, backend=args.backend)
     if args.backend and args.dumb:
-        _LOGGER.warn("--backend ignored for dumb mode")
+        _LOGGER.warning("--backend ignored for dumb mode")
     with BookDesc(args.out[0], args.dumb, idx_backend=backend_func) as desc:
         desc.parse_inputs(*args.inputs)
         desc.build_all_csvs()

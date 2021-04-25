@@ -55,8 +55,8 @@ def _find_description(buffer, size, encoding):
     end_tag = "</description>".encode(encoding)
     end = buffer.find(end_tag, start+1, size)
     if end <0:
-        log.warning("""Could not find </description> tag, assuming entire buffer is 
-the description""")
+        _LOGGER.warning("Could not find </description> tag, assuming entire " + 
+                        "buffer is the description")
         end = len(view)
     else:
         end += len(end_tag)

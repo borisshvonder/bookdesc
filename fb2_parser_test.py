@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
+import io
+
 import book_model
 import fb2_parser
 import unittest
@@ -22,7 +24,7 @@ class ParseFB2Test(unittest.TestCase):
             book.file.sha1.hex())
         self.assertEqual("42a7319a2fb45842de56cc7336f63fca",
             book.file.md5.hex())
-            
+
 
 class ParseDescriptionTest(unittest.TestCase):
 
@@ -264,8 +266,35 @@ HEA 1989, ISBN 9635713142 -->
         self.assertEqual(1932, book.year)
         self.assertTrue(len(book.metatext) > 100)
 
+    def test_huge_annotations_and_metatext_in_xml(self):
+        s = io.StringIO()
+        s.write("<description>\n")
+        s.write("<title-info>\n")
+        s.write("<annotation>\n")
+        for i in range(0, fb2_parser._MAX_ANNOTATION_LEN*2):
+            s.write('a')
+        s.write("</annotation>\n")
+        for i in range(0, fb2_parser._MAX_METATEXT_LEN*2):
+            s.write('m')
+        s.write("</title-info>\n")
+        s.write("</description>\n")
+        book = fb2_parser._parse_description(s.getvalue())
+        self.assertTrue(len(book.annotation) <= fb2_parser._MAX_ANNOTATION_LEN)
+        self.assertTrue(len(book.metatext) <= fb2_parser._MAX_METATEXT_LEN)
 
-
+    def test_huge_annotations_and_metatext_in_malformed(self):
+        s = io.StringIO()
+        s.write("<description>\n")
+        s.write("<title-info>\n")
+        s.write("<annotation>\n")
+        for i in range(0, fb2_parser._MAX_ANNOTATION_LEN*2):
+            s.write('a')
+        s.write("</annotation>\n")
+        for i in range(0, fb2_parser._MAX_METATEXT_LEN*2):
+            s.write('m')
+        book = fb2_parser._parse_description(s.getvalue())
+        self.assertTrue(len(book.annotation) <= fb2_parser._MAX_ANNOTATION_LEN)
+        self.assertTrue(len(book.metatext) <= fb2_parser._MAX_METATEXT_LEN)
 if __name__ == '__main__':
     unittest.main()
 

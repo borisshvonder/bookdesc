@@ -12,6 +12,8 @@ import io
 _LOGGER = log.get("bookdesc.fb2_parser")
 
 _MEGABYTE = 1024*1024
+_MAX_ANNOTATION_LEN=1024
+_MAX_METATEXT_LEN=4096
 
 def parse(binary_stream, buffer=None):
     """Parse contents from fb2 binary stream. Returns None if stream does not 
@@ -141,11 +143,11 @@ def _parse_description_via_xml(xml):
     if not book.year:
         book.year = _first_int(title_info, "date")
     annotation = None if title_info is None else title_info.find("annotation")
-    book.annotation = _dump_text(annotation)
+    book.annotation = _dump_text(annotation, _MAX_ANNOTATION_LEN)
     if not book.authors:
         document_info = desc.find("document-info")
         book.authors = _parse_authors(document_info)
-    book.metatext = _compact_whitespaces(_dump_text(desc))
+    book.metatext = _compact_whitespaces(_dump_text(desc, _MAX_METATEXT_LEN))
 
     return book
 
@@ -242,13 +244,14 @@ def _first_int(root, *tags):
                         text, ex)
     return None
 
-def _dump_text(root):
-    acc = io.StringIO()
+def _dump_text(root, max_len):
+    acc = BoundStringIO(max_len)
+    written = 0
     empty = True
     def _dump(node):
         nonlocal acc
         nonlocal empty
-        if node is None: return None
+        if acc.full() or node is None: return
         text = _strip(node.text)
         if text:
             if empty:
@@ -279,7 +282,11 @@ def _parse_description_via_regexpes(xml):
     book.year = _find_first_tag_int(xml, _BOOK_YEAR_RE)
     if not book.year: book.year =_find_first_tag_int(xml, _DATE_RE)
     book.annotation = _find_first_tag_text(xml, _ANNOTATION_RE)
+    if book.annotation and len(book.annotation) > _MAX_ANNOTATION_LEN:
+        book.annotation = book.annotation[:_MAX_ANNOTATION_LEN]
     book.metatext = _remove_all_tags(xml)
+    if book.metatext and len(book.metatext) > _MAX_METATEXT_LEN:
+        book.metatext = book.metatext[:_MAX_METATEXT_LEN:]
     return book
 
 def _find_all_tag_texts(xml, regexp):
@@ -358,3 +365,26 @@ class _ChecksumStream:
     def digest(self, name):
         "Return current digest value for digest"
         return self._digests[name].digest()
+
+class BoundStringIO:
+    "StringIO, but with a limited size"
+
+    def __init__(self, max_len):
+        self._len = 0
+        self._max_len = max_len
+        self._io = io.StringIO()
+
+    def write(self, sequence):
+        if self.full(): return
+        new_len = self._len + len(sequence)
+        if new_len > self._max_len:
+            to_write = self._max_len - self._len
+            self._io.write(sequence[:to_write])
+            self._len = self._max_len
+        else:
+            self._io.write(sequence)
+            self._len = new_len
+
+    def full(self): return self._len == self._max_len
+
+    def getvalue(self): return self._io.getvalue()

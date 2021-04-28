@@ -44,6 +44,7 @@ import gzip
 import csv
 import keyvalue
 import argparse
+import os
 import os.path
 import sys
 
@@ -118,6 +119,9 @@ class BookDesc:
             try:
                 book = fb2_parser.parse(stream, buffer=self._parse_buffer)
                 book.file.path = fb2_src.path()
+                stat = os.stat(book.file.path)
+                book.file.mod_time = stat.st_mtime
+                book.file.size = stat.st_size
             except:
                 _LOGGER.exception("FB2 '%s' could not be parsed", fb2_src)
                 book = None

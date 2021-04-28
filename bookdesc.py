@@ -117,6 +117,7 @@ class BookDesc:
             book = None
             try:
                 book = fb2_parser.parse(stream, buffer=self._parse_buffer)
+                book.file.path = fb2_src.path()
             except:
                 _LOGGER.exception("FB2 '%s' could not be parsed", fb2_src)
                 book = None

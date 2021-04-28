@@ -38,7 +38,7 @@ h1. Non-goals
 * No import from existing databases and/or CSVs.
 """
 
-VERSION=1.1
+VERSION=1.2
 
 import gzip
 import csv

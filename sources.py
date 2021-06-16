@@ -6,6 +6,7 @@ reading files from .zip and .gz archives
 import os
 import os.path
 import zipfile
+import datetime
 
 def source_at(path, recursive=True):
     """Return either a Source (if path is pointing to a file) or 
@@ -62,6 +63,12 @@ class Source:
         "Return path of this source"
         pass
 
+    def mtime(self):
+        "Returns modification time of this source in seconds"
+
+    def size(self):
+        "Returns size of this source in bytes"
+
     def open(self, mode):
         """Return file-like object that can be read from. It has to be
            closed after it is no longer in use"""
@@ -96,8 +103,13 @@ class FileSource(Source):
     def __init__(self, path):
         self._path = path
         self._open = open
+        self._stat = os.stat(path)
 
     def path(self): return self._path
+
+    def mtime(self): return self._stat.st_mtime
+
+    def size(self): return self._stat.st_size
 
     def open(self, mode): return self._open(self._path, mode)
 
@@ -127,8 +139,16 @@ class ZipFileSource(Source):
         self._path = path
         self._zip = zip_file
         self._name = name
+        self._info = zip_file.getinfo(name)
 
     def path(self): return self._path
+
+    def mtime(self): 
+        i = [*self._info.date_time]
+        i.append(0) # microseconds
+        return datetime.datetime(*i)
+
+    def size(self): return self._info.file_size
 
     def open(self, mode):
         if "w" in mode:

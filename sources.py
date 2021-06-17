@@ -146,7 +146,7 @@ class ZipFileSource(Source):
     def mtime(self): 
         i = [*self._info.date_time]
         i.append(0) # microseconds
-        return datetime.datetime(*i)
+        return datetime.datetime(*i).timestamp()
 
     def size(self): return self._info.file_size
 

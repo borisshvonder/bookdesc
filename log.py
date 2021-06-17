@@ -24,15 +24,18 @@ class WarningsInterceptor:
 
     def exception(self, msg, *args, **kwargs):
         self._reallog.exception(msg, *args, **kwargs)
-        if _CONFIG.warnings_as_errors: raise RuntimeError(msg)
+        if _CONFIG.warnings_as_errors: 
+            raise RuntimeError(msg + repr(args) + repr(kwargs))
 
     def error(self, msg, *args, **kwargs): 
         self._reallog.error(msg, *args, **kwargs)
-        if _CONFIG.warnings_as_errors: raise RuntimeError(msg)
+        if _CONFIG.warnings_as_errors: 
+            raise RuntimeError(msg + repr(args) + repr(kwargs))
 
     def critical(self, msg, *args, **kwargs):
         self._reallog.critical(msg, *args, **kwargs)
-        if _CONFIG.warnings_as_errors: raise RuntimeError(msg)
+        if _CONFIG.warnings_as_errors: 
+            raise RuntimeError(msg + repr(args) + repr(kwargs))
 
     def __getattr__(self, attr):
         return getattr(self._reallog, attr)

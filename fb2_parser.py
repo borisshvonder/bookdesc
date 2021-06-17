@@ -140,7 +140,7 @@ def _parse_description_via_xml(xml):
         return None
     publish_info = desc.find("publish-info")
     book.name = _first_text(publish_info, "book-name")
-    book.year = _first_int(publish_info, "year", "date")
+    book.year = _first_year(publish_info, "year", "date")
     book.isbn = _first_text(publish_info, "isbn")
 
     title_info = desc.find("title-info")
@@ -148,7 +148,7 @@ def _parse_description_via_xml(xml):
     if not book.name:
         book.name = _first_text(title_info, "book-title")
     if not book.year:
-        book.year = _first_int(title_info, "date")
+        book.year = _first_year(title_info, "date")
     annotation = None if title_info is None else title_info.find("annotation")
     book.annotation = _dump_text(annotation, _MAX_ANNOTATION_LEN)
     if not book.authors:
@@ -237,17 +237,34 @@ def _first_text(root, *tags):
             text = _strip(node.text)
             if text: return text
     return None
-        
-def _first_int(root, *tags):
+
+_STR_2_YEAR=re.compile(r"\d\d\d\d")
+
+def _string_to_year(s):
+    try:
+        return int(s)
+    except ValueError:
+        m = _STR_2_YEAR.search(s)
+        if m:
+            year = int(m.group(0))
+            _LOGGER.info("Could not convert '%s' to int, assuming it is %s",
+                s, year)
+        else:
+            _LOGGER.info("Could not parse '%s' as year", s)
+
+def _first_year(root, conversion=int, *tags):
+    return _first_int(root, _string_to_year, *tags)
+    
+def _first_int(root, conversion, *tags):
     if root is None: return None
     for tag in tags:
         for node in root.findall(tag):
             text = _strip(node.text)
             if text:
                 try:
-                    return int(text)
+                    return conversion(text)
                 except ValueError as ex:
-                    _LOGGER.info("Can't parse book year:'%s' due to %s", 
+                    _LOGGER.info("Can't parse int: '%s' due to %s", 
                         text, ex)
     return None
 

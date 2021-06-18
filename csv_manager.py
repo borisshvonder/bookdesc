@@ -54,7 +54,7 @@ def _book2file_std(book):
                     return letter
                 else:
                     return "0"
-    return "noauthor"
+    return "_"
 
 def _mtime_os(path):
     "Standard os.stat() implementation for mtime"
